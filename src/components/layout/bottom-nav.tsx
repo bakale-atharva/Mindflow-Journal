@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, LineChart, User } from "lucide-react";
+import { Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/", icon: Home, label: "Home" },
-  { href: "/entries", icon: BookOpen, label: "Entries" },
-  { href: "/insights", icon: LineChart, label: "Insights" },
-  { href: "/profile", icon: User, label: "Profile" },
+  { href: "/", icon: Home, label: "Journal" },
 ];
 
 export function BottomNav() {
@@ -17,7 +14,7 @@ export function BottomNav() {
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background border-t border-border z-40 pb-safe">
-      <nav className="flex items-center justify-around h-full px-2">
+      <nav className="flex h-full items-center justify-center px-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
           return (

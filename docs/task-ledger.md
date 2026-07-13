@@ -27,15 +27,16 @@ Status key: `DONE`, `IN PROGRESS`, `NEXT`, `BLOCKED`, `LATER`.
 
 These changes predate the canonical MVP. Review them against `mvp-specification.md`; do not discard or reset them.
 
-## Next — Security Gate
+## Security Gate
 
-- `SEC-01` Read bundled Next.js 16 authentication, cookies, server-action, and request-boundary documentation. `NEXT`
-- `DB-02` Create beta access, profiles, journal entries, reflections, events, constraints, and migrations. Depends on `SEC-01`. `NEXT`
-- `SEC-02` Implement email magic-link login and callback. Depends on `DB-02`. `NEXT`
-- `SEC-03` Implement normalized-email allowlist checks. Depends on `DB-02`. `NEXT`
-- `SEC-04` Replace shared user ID with authenticated server identity. Depends on `SEC-02`. `NEXT`
-- `SEC-05` Implement and test per-user row-level security. Depends on `DB-02`, `SEC-02`. `NEXT`
-- `SEC-06` Add sign-out and block unfinished private routes. Depends on `SEC-02`. `NEXT`
+- `SEC-01` Read bundled Next.js 16 authentication, cookies, server-action, and request-boundary documentation. `DONE`
+- `DB-02` Create the complete migration-aware beta schema and RLS SQL. `DONE`
+- `SEC-02` Implement email magic-link login, PKCE callback, and session refresh Proxy. `DONE`
+- `SEC-03` Implement normalized-email allowlist checks without exposing the allowlist table. `DONE`
+- `SEC-04` Replace shared user ID with authenticated server identity in every journal operation. `DONE`
+- `SEC-05` Implement per-user row-level security and an isolation verification script. `BLOCKED` pending SQL application and two-user remote verification.
+- `SEC-06` Add sign-out and hide unfinished mock routes from the launch path. `DONE`
+- `SEC-07` Apply `supabase_schema.sql` to the connected project and run `supabase_rls_verification.sql`. `NEXT`
 
 No real users may enter until `SEC-02` through `SEC-05` are verified.
 
@@ -98,5 +99,4 @@ No real users may enter until `SEC-02` through `SEC-05` are verified.
 
 ## Next Best Action
 
-Start `SEC-01`, then implement the secure Supabase schema and authentication boundary without disturbing existing journal work.
-
+Apply `supabase_schema.sql` in Supabase, configure the callback URLs, create two allowlisted test users, and run `supabase_rls_verification.sql`. Do not invite real users until it passes.

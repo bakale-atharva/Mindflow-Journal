@@ -5,8 +5,9 @@ import { Plus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { JournalForm } from './journal-form'
 import { JournalEntryCard } from './journal-entry-card'
+import type { JournalEntry } from '@/app/actions'
 
-export function JournalView({ initialEntries }: { initialEntries: any[] }) {
+export function JournalView({ initialEntries }: { initialEntries: JournalEntry[] }) {
   const [view, setView] = useState<'list' | 'form'>('list')
 
   return (

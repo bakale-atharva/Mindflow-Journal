@@ -1,1 +1,4 @@
-ALTER TABLE journal_entries ADD COLUMN mood TEXT;
+-- The canonical schema is migration-aware.
+-- Run the complete `supabase_schema.sql` file in the Supabase SQL editor.
+-- It upgrades the prototype journal table in place, preserves legacy rows,
+-- removes unsafe policies, and installs the founding-beta schema and RLS.

@@ -6,13 +6,13 @@ Last updated: 2026-07-13
 
 MindFlow Journal is a calm, direct, non-clinical AI-guided journaling product for people who overthink, feel mentally cluttered, or struggle with journaling consistency. The immediate business goal is to acquire paying founding users quickly, using free distribution by default and removing product work that does not directly improve activation, learning, or revenue.
 
-Current stage: Phase 0 complete; working pre-launch prototype, not yet launch-ready.
+Current stage: Phase 1 implementation complete locally; database activation and live two-user isolation verification remain before the security gate can close.
 
 Confidence: high for the approved founding-beta scope and repository state. Historical drafts were not available, so the canonical documents were reconstructed and approved from the supplied context and grilling decisions.
 
 ## Current Focus
 
-- Implement the security gate defined in the locked founding-beta scope.
+- Apply and verify the completed security gate in the connected Supabase project.
 - Turn the current single-user prototype into a safe, testable paid beta.
 - Launch the founding offer and begin direct customer acquisition before polishing growth features.
 
@@ -59,6 +59,17 @@ Confidence: high for the approved founding-beta scope and repository state. Hist
 - Built prototype insight, streak, mood-trend, and entry-detail screens using mock or placeholder data.
 - Created an investor dashboard mockup asset.
 - Verified on 2026-07-13 that the current production build compiles and passes TypeScript.
+- Read the bundled Next.js 16 authentication, cookies, forms, redirect, and Proxy guidance before implementing Phase 1.
+- Added a complete migration-aware Supabase schema covering beta access, profiles, secured journal entries, future reflections, product events, constraints, grants, and RLS.
+- Added a two-user SQL isolation verification script.
+- Implemented email magic-link request, PKCE callback exchange, session refresh Proxy, and sign-out.
+- Implemented server-side active-allowlist checks without exposing the allowlist table.
+- Replaced the shared hard-coded journal identity with the authenticated Supabase user in create, read, and delete operations.
+- Standardized current journal mood values to the 1–5 database contract.
+- Removed prototype-only navigation and redirected mock insight, onboarding, and entry-detail routes out of the launch path.
+- Added a dedicated public authentication experience and clear access/error states.
+- Verified the Phase 1 application with a successful production build and TypeScript check.
+- Verified locally that `/` redirects unauthenticated requests to `/auth/login` and that the login page renders successfully.
 
 ## In Progress / Uncommitted Work
 
@@ -90,7 +101,6 @@ These changes exist locally but are not committed. They must be reviewed and tes
 - Review and finish the current uncommitted journal changes.
 - Replace permissive database access with authenticated per-user access before accepting real private journal data.
 - Add a complete authentication flow; client/server helpers exist but no usable sign-up/login route is present.
-- Remove the hard-coded shared user ID.
 - Resolve the mismatch between mock mood scores and stored emoji values.
 - Replace or remove mock insight, streak, trend, and entry-detail data.
 - Connect onboarding answers to stored user state, or simplify onboarding for the beta.
@@ -145,8 +155,8 @@ These changes exist locally but are not committed. They must be reviewed and tes
 
 ## Blockers and Risks
 
-- The current database policy allows all operations, and entries use a shared hard-coded user ID; real private journal data must not be onboarded in this state.
-- Authentication helpers are present but the user-facing auth flow is incomplete.
+- The connected database remains on the prototype policy until `supabase_schema.sql` is applied; real private journal data must not be onboarded before that migration and isolation test pass.
+- The Phase 1 SQL has not yet been applied to the connected Supabase project, so live magic-link and RLS behavior cannot yet be certified.
 - Several impressive-looking screens use random or mock data and may create false confidence about product readiness.
 - AI functionality is named in the product promise but is not yet implemented in the inspected core flow.
 - Landing page, payment, access granting, and analytics are not evidenced in the repository.
@@ -156,7 +166,7 @@ These changes exist locally but are not committed. They must be reviewed and tes
 
 ## Next Best Action
 
-Read the bundled Next.js 16 authentication and request-boundary guidance, then implement the secure Supabase schema, email magic-link authentication, allowlist, and per-user row-level security without disturbing the existing uncommitted journal work.
+Run `supabase_schema.sql` in the connected Supabase project, configure local and production callback URLs, create two allowlisted test users, and run `supabase_rls_verification.sql` before inviting anyone.
 
 ## Suggested Execution Plan
 
@@ -176,3 +186,4 @@ Read the bundled Next.js 16 authentication and request-boundary guidance, then i
 
 - 2026-07-13: Initial ledger reconstructed from owner-provided status and repository audit. Production build verified. Repository implementation found to be materially ahead of the supplied “still to do” list.
 - 2026-07-13: Phase 0 completed. Seven canonical documents created. Grilling session locked age, refund, consent, founder-access, deletion, data-lifecycle, missed-day, and discount decisions.
+- 2026-07-13: Phase 1 implemented locally. Secure auth, allowlist boundary, authenticated journal operations, complete database SQL, and RLS verification script added. Production build passed; remote database application and isolation verification remain.

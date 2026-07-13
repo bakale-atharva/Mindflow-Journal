@@ -6,13 +6,11 @@ import { saveEntry } from "@/app/actions"
 import { format } from 'date-fns'
 
 const MOOD_LIST = [
-  { label: 'Happy', emoji: '😊' },
-  { label: 'Neutral', emoji: '😌' },
-  { label: 'Sad', emoji: '😔' },
-  { label: 'Anxious', emoji: '😰' },
-  { label: 'Energetic', emoji: '🤩' },
-  { label: 'Inspired', emoji: '✨' },
-  { label: 'Calm', emoji: '🧘' }
+  { score: 1, label: 'Heavy', emoji: '😔' },
+  { score: 2, label: 'Low', emoji: '😕' },
+  { score: 3, label: 'Steady', emoji: '😌' },
+  { score: 4, label: 'Light', emoji: '🙂' },
+  { score: 5, label: 'Energized', emoji: '😊' },
 ]
 
 function SubmitButton() {
@@ -31,7 +29,7 @@ function SubmitButton() {
 
 export function JournalForm({ onCancel }: { onCancel: () => void }) {
   const [state, formAction] = useActionState(saveEntry, null)
-  const [selectedMood, setSelectedMood] = useState<string>('')
+  const [selectedMood, setSelectedMood] = useState<number | null>(null)
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"))
 
   useEffect(() => {
@@ -59,16 +57,18 @@ export function JournalForm({ onCancel }: { onCancel: () => void }) {
       {/* Mood Picker */}
       <div className="flex flex-col gap-4">
         <label className="text-xs font-medium text-white/50 uppercase tracking-widest">Your Mood</label>
-        <input type="hidden" name="mood" value={selectedMood} />
+        <input type="hidden" name="mood" value={selectedMood ?? ''} />
         <div className="flex flex-wrap items-center gap-4">
-          {MOOD_LIST.map(({ label, emoji }) => {
-            const isSelected = selectedMood === emoji;
+          {MOOD_LIST.map(({ score, label, emoji }) => {
+            const isSelected = selectedMood === score;
             return (
               <button
-                key={label}
+                key={score}
                 type="button"
-                onClick={() => setSelectedMood(emoji)}
+                onClick={() => setSelectedMood(isSelected ? null : score)}
                 title={label}
+                aria-label={`${label}, ${score} out of 5`}
+                aria-pressed={isSelected}
                 className={`w-14 h-14 text-2xl flex items-center justify-center rounded-2xl transition-all duration-500 ${
                   isSelected 
                     ? 'bg-white/5 border border-[var(--color-teal-accent)] shadow-[var(--shadow-glow-teal)] scale-110 z-10' 
@@ -94,7 +94,7 @@ export function JournalForm({ onCancel }: { onCancel: () => void }) {
         </div>
       </div>
       
-      {state?.error && (
+      {state && 'error' in state && (
         <p className="text-sm text-red-400 font-medium p-4 bg-red-400/10 rounded-2xl border border-red-400/20">
           {state.error}
         </p>

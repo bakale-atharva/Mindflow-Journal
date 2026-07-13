@@ -5,8 +5,17 @@ import { format } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, Edit2 } from 'lucide-react'
 import { deleteEntry } from '@/app/actions'
+import type { JournalEntry } from '@/app/actions'
 
-export function JournalEntryCard({ entry }: { entry: any }) {
+const MOOD_EMOJI: Record<number, string> = {
+  1: '😔',
+  2: '😕',
+  3: '😌',
+  4: '🙂',
+  5: '😊',
+}
+
+export function JournalEntryCard({ entry }: { entry: JournalEntry }) {
   const [expanded, setExpanded] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -35,7 +44,7 @@ export function JournalEntryCard({ entry }: { entry: any }) {
         </span>
         {entry.mood && (
           <span className="text-2xl bg-white/5 border border-white/10 rounded-2xl w-12 h-12 flex items-center justify-center shadow-sm">
-            {entry.mood}
+            {MOOD_EMOJI[entry.mood]}
           </span>
         )}
       </motion.div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { Bell } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { format } from "date-fns";
+import { signOut } from "@/app/auth/actions";
 
 export function TopBar() {
   const today = new Date();
@@ -24,13 +25,17 @@ export function TopBar() {
         </p>
       </div>
 
-      <div className="flex items-center gap-4 ml-auto md:ml-0">
-        <button className="w-10 h-10 rounded-full flex items-center justify-center text-secondary-text hover:bg-tertiary transition-colors">
-          <Bell className="w-5 h-5" />
-        </button>
-        <div className="md:hidden w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-medium text-sm">
-          A
-        </div>
+      <div className="ml-auto flex items-center gap-4 md:ml-0">
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="flex h-10 items-center gap-2 rounded-full px-3 text-sm font-medium text-secondary-text transition-colors hover:bg-tertiary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            aria-label="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
+        </form>
       </div>
     </header>
   );
