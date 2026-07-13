@@ -2,6 +2,7 @@
 CREATE TABLE journal_entries (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   content TEXT NOT NULL,
+  mood TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   user_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID
 );

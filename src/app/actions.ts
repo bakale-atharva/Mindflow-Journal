@@ -5,19 +5,42 @@ import { revalidatePath } from 'next/cache'
 
 export async function saveEntry(prevState: any, formData: FormData) {
   const content = formData.get('content') as string
+  const mood = formData.get('mood') as string
+  const customDate = formData.get('created_at') as string
   
   if (!content || !content.trim()) {
     return { error: 'Entry content cannot be empty.' }
   }
 
+  // Create payload
+  const payload: any = { 
+    content: content.trim(), 
+    user_id: '00000000-0000-0000-0000-000000000000' 
+  }
+  
+  if (mood) payload.mood = mood
+  if (customDate) payload.created_at = new Date(customDate).toISOString()
+
   const { error } = await supabase
     .from('journal_entries')
-    .insert([
-      { content: content.trim(), user_id: '00000000-0000-0000-0000-000000000000' }
-    ])
+    .insert([payload])
 
   if (error) {
     return { error: 'Failed to save entry: ' + error.message }
+  }
+
+  revalidatePath('/')
+  return { success: true }
+}
+
+export async function deleteEntry(id: string) {
+  const { error } = await supabase
+    .from('journal_entries')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    throw new Error('Failed to delete entry: ' + error.message)
   }
 
   revalidatePath('/')
@@ -31,8 +54,6 @@ export async function getEntries() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    // If table doesn't exist yet, we can return empty array to prevent breaking UI
-    // 42P01 is Postgres native, PGRST106 is PostgREST schema cache miss
     if (error.code === '42P01' || error.code === 'PGRST106' || error.message.includes('schema cache')) {
        return []
     }

@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`dark ${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
       <body className="flex h-full min-h-full flex-col md:flex-row overflow-hidden bg-secondary">
         <Sidebar />
