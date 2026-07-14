@@ -6,13 +6,13 @@ Last updated: 2026-07-13
 
 MindFlow Journal is a calm, direct, non-clinical AI-guided journaling product for people who overthink, feel mentally cluttered, or struggle with journaling consistency. The immediate business goal is to acquire paying founding users quickly, using free distribution by default and removing product work that does not directly improve activation, learning, or revenue.
 
-Current stage: Phase 1 implementation complete locally; database activation and live two-user isolation verification remain before the security gate can close.
+Current stage: Phase 1 code and database schema are active; authentication URL setup, allowlist testing, and live two-user isolation verification remain before the security gate can close.
 
 Confidence: high for the approved founding-beta scope and repository state. Historical drafts were not available, so the canonical documents were reconstructed and approved from the supplied context and grilling decisions.
 
 ## Current Focus
 
-- Apply and verify the completed security gate in the connected Supabase project.
+- Verify the completed security gate in the connected Supabase project.
 - Turn the current single-user prototype into a safe, testable paid beta.
 - Launch the founding offer and begin direct customer acquisition before polishing growth features.
 
@@ -70,6 +70,7 @@ Confidence: high for the approved founding-beta scope and repository state. Hist
 - Added a dedicated public authentication experience and clear access/error states.
 - Verified the Phase 1 application with a successful production build and TypeScript check.
 - Verified locally that `/` redirects unauthenticated requests to `/auth/login` and that the login page renders successfully.
+- Applied the complete Phase 1 schema to the connected Supabase project without SQL errors on 2026-07-14.
 
 ## In Progress / Uncommitted Work
 
@@ -155,8 +156,7 @@ These changes exist locally but are not committed. They must be reviewed and tes
 
 ## Blockers and Risks
 
-- The connected database remains on the prototype policy until `supabase_schema.sql` is applied; real private journal data must not be onboarded before that migration and isolation test pass.
-- The Phase 1 SQL has not yet been applied to the connected Supabase project, so live magic-link and RLS behavior cannot yet be certified.
+- The Phase 1 schema is active, but live magic-link behavior and cross-user isolation are not yet certified.
 - Several impressive-looking screens use random or mock data and may create false confidence about product readiness.
 - AI functionality is named in the product promise but is not yet implemented in the inspected core flow.
 - Landing page, payment, access granting, and analytics are not evidenced in the repository.
@@ -166,7 +166,7 @@ These changes exist locally but are not committed. They must be reviewed and tes
 
 ## Next Best Action
 
-Run `supabase_schema.sql` in the connected Supabase project, configure local and production callback URLs, create two allowlisted test users, and run `supabase_rls_verification.sql` before inviting anyone.
+Configure the Supabase Site URL and local `/auth/callback` redirect, then create an allowlisted test user and prove the magic-link journey before running the two-user isolation test.
 
 ## Suggested Execution Plan
 
@@ -187,3 +187,4 @@ Run `supabase_schema.sql` in the connected Supabase project, configure local and
 - 2026-07-13: Initial ledger reconstructed from owner-provided status and repository audit. Production build verified. Repository implementation found to be materially ahead of the supplied “still to do” list.
 - 2026-07-13: Phase 0 completed. Seven canonical documents created. Grilling session locked age, refund, consent, founder-access, deletion, data-lifecycle, missed-day, and discount decisions.
 - 2026-07-13: Phase 1 implemented locally. Secure auth, allowlist boundary, authenticated journal operations, complete database SQL, and RLS verification script added. Production build passed; remote database application and isolation verification remain.
+- 2026-07-14: The complete Phase 1 schema was applied to the connected Supabase project without errors. Authentication and isolation verification remain.
