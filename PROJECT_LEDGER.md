@@ -1,19 +1,19 @@
 # MindFlow Journal — Project Ledger
 
-Last updated: 2026-07-13
+Last updated: 2026-07-14
 
 ## Project Snapshot
 
 MindFlow Journal is a calm, direct, non-clinical AI-guided journaling product for people who overthink, feel mentally cluttered, or struggle with journaling consistency. The immediate business goal is to acquire paying founding users quickly, using free distribution by default and removing product work that does not directly improve activation, learning, or revenue.
 
-Current stage: Phase 1 is complete. The live schema, allowlist authentication, authenticated journal flow, and two-user row-level-security isolation test have passed. Phase 2 is next.
+Current stage: Phase 1 is complete and the owner has verified the Phase 2 application journey. Confirmation of the live Phase 2 migration and post-migration RLS test remains before the phase formally closes.
 
 Confidence: high for the approved founding-beta scope and repository state. Historical drafts were not available, so the canonical documents were reconstructed and approved from the supplied context and grilling decisions.
 
 ## Current Focus
 
-- Verify the completed security gate in the connected Supabase project.
-- Turn the current single-user prototype into a safe, testable paid beta.
+- Activate and verify the completed seven-day program migration in the connected Supabase project.
+- Validate the authenticated onboarding-to-Day-1 journey on mobile and desktop.
 - Launch the founding offer and begin direct customer acquisition before polishing growth features.
 
 ## Done So Far
@@ -74,16 +74,22 @@ Confidence: high for the approved founding-beta scope and repository state. Hist
 - Verified an allowlisted user can receive a magic link, sign in, persist the session, and create and view a journal entry.
 - Verified a non-allowlisted email is rejected from founding-beta access.
 - Verified two-user database isolation: User B could not read, update, or delete User A’s entry, while User A retained access to the unchanged entry.
+- Implemented the fixed seven-prompt program, server-derived 24-hour unlocks, missed-day access, and one editable entry per day.
+- Implemented three-stage 18+ onboarding, optional AI-processing consent, and an explicit immutable program start.
+- Implemented real progress, current/available/complete/locked day states, exact next unlock time, journal archive, entry detail, editing, deletion, and completion presentation.
+- Applied the Living Field Journal design system from `Design.md`, including the responsive thought contour, labeled five-point mood control, and light porcelain/lilac visual language.
+- Added database-enforced program start immutability, day/prompt identity, and server-time unlock eligibility in the Phase 2 migration.
+- Added program loading, failure, expired-window, and responsive next-unlock states.
+- Added eight passing program tests covering exact unlock boundaries, missed days, immutable unlock schedule, completion deadline, distinct days, and late completion.
+- Verified the Phase 2 production build and TypeScript checks on 2026-07-14.
+- Owner verified the Phase 2 application journey on 2026-07-14.
 
 ## In Progress / Uncommitted Work
 
-- Journal UI redesign and real Supabase-backed list flow.
-- Mood and custom date/time persistence.
-- Delete-entry flow.
-- Associated database migration and schema updates.
-- Styling and layout adjustments.
+- Phase 2 hardening, program tests, responsive states, and database migration.
+- A pre-existing onboarding layout adjustment remains preserved in the working tree.
 
-These changes exist locally but are not committed. They must be reviewed and tested before being treated as a stable milestone.
+These changes must be committed after the live migration and journey checks, or intentionally committed as a local implementation milestone.
 
 ## Decisions Made
 
@@ -100,26 +106,18 @@ These changes exist locally but are not committed. They must be reviewed and tes
 
 ## Still To Do
 
-### Stabilize the current prototype — next dependency
+### Activate and verify Phase 2 — next dependency
 
-- Review and finish the current uncommitted journal changes.
-- Replace permissive database access with authenticated per-user access before accepting real private journal data.
-- Add a complete authentication flow; client/server helpers exist but no usable sign-up/login route is present.
-- Resolve the mismatch between mock mood scores and stored emoji values.
-- Replace or remove mock insight, streak, trend, and entry-detail data.
-- Connect onboarding answers to stored user state, or simplify onboarding for the beta.
-- Add useful empty, loading, validation, and failure states.
-- Add focused tests for private-data isolation and the core entry flow.
-- Test the production build and primary flow in a browser on mobile and desktop.
-- Implement 18+ confirmation, AI consent, account deletion, and beta-end data lifecycle.
+- Run `supabase/phase_2_program_migration.sql` in the connected Supabase project.
+- Repeat the two-user isolation test with two clean test accounts.
+- Verify fresh-user onboarding, both consent paths, Day 1 save/edit/delete, future-day rejection, and returning-user routing.
+- Complete visual QA at mobile, tablet, laptop, and wide-desktop widths.
+- Configure the service-role key before relying on product events or account deletion.
 
-### Core founding-beta experience — depends on safe user accounts
+### Core founding-beta experience — after Phase 2 verification
 
-- Implement the selected daily prompt / 7-day program flow.
-- Implement the smallest useful AI reflection after an entry, with clear non-clinical wording.
-- Add entry history and a usable individual entry view backed by real data.
-- Decide whether basic mood logging remains in the beta; if retained, use one consistent scale.
-- Decide whether streaks are essential to the 7-day promise; otherwise defer them.
+- Complete Phase 3 AI configuration and safety-path testing.
+- Finish and verify permanent account deletion and the beta-end data lifecycle.
 
 ### Revenue path — can proceed alongside prototype stabilization
 
@@ -160,16 +158,16 @@ These changes exist locally but are not committed. They must be reviewed and tes
 ## Blockers and Risks
 
 - Phase 1 private-data isolation and allowlist authentication are certified against the connected Supabase project.
-- Several impressive-looking screens use random or mock data and may create false confidence about product readiness.
-- AI functionality is named in the product promise but is not yet implemented in the inspected core flow.
+- Phase 2 program invariants are not live until its Supabase migration is applied.
+- AI functionality exists but is not configured or verified against a live OpenAI key.
 - Landing page, payment, access granting, and analytics are not evidenced in the repository.
-- The current working tree has substantial uncommitted work, increasing the chance of accidental loss or unclear ownership.
+- Product-event and account-deletion operations require a Supabase service-role key that is not configured locally.
 - Some current copy uses mental-wellness/anxiety language that should be reviewed against the non-clinical positioning.
 - The 1,000-paying-customer/90-day goal is not an appropriate immediate execution target before proving conversion and retention with the first 5–20 customers.
 
 ## Next Best Action
 
-Begin Phase 2 by implementing the fixed seven-day Emotional Reset program state, onboarding start time, day-unlock rules, and one editable entry per program day.
+Confirm that `supabase/phase_2_program_migration.sql` and the post-migration two-user isolation test both passed. Then begin Phase 3 AI reflection configuration and safety-path verification.
 
 ## Suggested Execution Plan
 
@@ -194,3 +192,5 @@ Begin Phase 2 by implementing the fixed seven-day Emotional Reset program state,
 - 2026-07-14: Diagnosed the allowlist failure as an obsolete or incorrect Supabase project URL. The owner replaced it with the active project configuration and confirmed the connection works.
 - 2026-07-14: Allowlisted magic-link login, session persistence, journal entry creation/read, and non-allowlisted rejection were verified successfully. Two-user RLS isolation remains.
 - 2026-07-14: Two-user RLS verification passed without a setup or isolation failure. Phase 1 security gate closed; Phase 2 is ready to begin.
+- 2026-07-14: Phase 2 implemented locally using the Living Field Journal design. Eight program tests, TypeScript, and the production build pass; live migration and authenticated browser verification remain.
+- 2026-07-14: Owner reported the Phase 2 application journey verified. Database-migration and post-migration isolation confirmation remain before closing the phase.

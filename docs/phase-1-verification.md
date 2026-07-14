@@ -5,9 +5,9 @@ The Phase 1 code and canonical SQL are implemented. Complete these external step
 ## 1. Apply the database
 
 1. Open the connected Supabase project’s SQL editor.
-2. Run the entire root-level `supabase_schema.sql` file.
+2. Run the entire `supabase/supabase_schema.sql` file.
 3. Confirm the transaction completes without an error.
-4. Do not run the obsolete one-line prototype migration; `supabase_schema.sql` is the complete migration-aware file.
+4. Do not run the obsolete one-line prototype migration; `supabase/supabase_schema.sql` is the complete migration-aware file.
 
 ## 2. Configure authentication
 
@@ -19,11 +19,11 @@ The Phase 1 code and canonical SQL are implemented. Complete these external step
 
 ## 3. Add two test purchasers
 
-Insert two normalized test emails into `public.beta_access` using the example at the bottom of `supabase_schema.sql`. Request a magic link for each email so both Supabase Auth users exist.
+Insert two normalized test emails into `public.beta_access` using the example at the bottom of `supabase/supabase_schema.sql`. Request a magic link for each email so both Supabase Auth users exist.
 
 ## 4. Prove database isolation
 
-Replace the UUID and email placeholders in `supabase_rls_verification.sql`, then run it. Success produces no RLS exception and rolls back the test rows. Any raised `RLS FAILURE` is a launch blocker.
+Replace the UUID and email placeholders in `supabase/supabase_rls_verification.sql`, then run it. Success produces no RLS exception and rolls back the test rows. Any raised `RLS FAILURE` is a launch blocker.
 
 ## 5. Prove the browser journey
 
@@ -35,4 +35,3 @@ Replace the UUID and email placeholders in `supabase_rls_verification.sql`, then
 - Signing out clears the session and returns to `/auth/login`.
 
 Do not invite real users until both the SQL isolation test and the two-browser test pass.
-

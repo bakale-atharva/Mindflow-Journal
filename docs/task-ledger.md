@@ -1,7 +1,7 @@
 # MindFlow Journal — Task Ledger
 
 Status: Canonical execution queue  
-Last updated: 2026-07-13
+Last updated: 2026-07-14
 
 Status key: `DONE`, `IN PROGRESS`, `NEXT`, `BLOCKED`, `LATER`.
 
@@ -42,19 +42,19 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 
 ## Product Build
 
-- `PROD-01` Reconcile current UI with the 1–5 mood model and one-entry-per-day rule.
-- `PROD-02` Implement 18+ confirmation, AI consent, onboarding, and immutable program start.
-- `PROD-03` Implement seven prompts and 24-hour unlock behavior; retain unlocked missed days.
-- `PROD-04` Implement create, edit, delete, progress, completion, and real history states.
-- `PROD-05` Remove mock and random data from the paid path.
-- `PROD-06` Implement permanent account/data deletion and beta-end migration/deletion operations.
+- `PROD-01` Reconcile current UI with the 1–5 mood model and one-entry-per-day rule. `DONE`
+- `PROD-02` Implement 18+ confirmation, AI consent, onboarding, and immutable program start. `IN PROGRESS` — code and migration complete; live migration pending.
+- `PROD-03` Implement seven prompts and 24-hour unlock behavior; retain unlocked missed days. `DONE`
+- `PROD-04` Implement create, edit, delete, progress, completion, and real history states. `DONE`
+- `PROD-05` Remove mock and random data from the paid path. `DONE`
+- `PROD-06` Implement permanent account/data deletion and beta-end migration/deletion operations. `IN PROGRESS`
 
 ## AI Build
 
-- `AI-01` Configure server-only OpenAI Responses API client and configurable model.
-- `AI-02` Enforce consent, moderation, and the immediate-danger redirect.
-- `AI-03` Implement structured reflection and optional question.
-- `AI-04` Preserve saved entries on failure and add idempotent retry.
+- `AI-01` Configure server-only OpenAI Responses API client and configurable model. `IN PROGRESS` — implementation exists; environment configuration remains.
+- `AI-02` Enforce consent, moderation, and the immediate-danger redirect. `IN PROGRESS`
+- `AI-03` Implement structured reflection and optional question. `IN PROGRESS`
+- `AI-04` Preserve saved entries on failure and add idempotent retry. `IN PROGRESS`
 - `AI-05` Test clinical-claim, unsupported-inference, failure, and no-consent paths.
 
 ## Revenue and Operations
@@ -67,7 +67,7 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 
 ## Measurement and Acquisition
 
-- `DATA-01` Add product events without journal-content metadata.
+- `DATA-01` Add product events without journal-content metadata. `IN PROGRESS` — non-blocking writes implemented; service-role configuration remains.
 - `DATA-02` Create a lightweight prospect/customer sheet.
 - `ACQ-01` Begin warm outreach only after `REV-05` passes.
 - `ACQ-02` Recruit five paid users and interview each after completion or abandonment.
@@ -79,10 +79,10 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 
 - `QA-01` Allowlist and magic-link tests. `DONE`
 - `QA-02` Cross-user RLS isolation tests. `DONE`
-- `QA-03` Unlock, missed-day, edit, deletion, completion, and 30-day lifecycle tests.
+- `QA-03` Unlock, missed-day, edit, deletion, completion, and 30-day lifecycle tests. `IN PROGRESS` — eight program tests pass; live journey remains.
 - `QA-04` AI consent, success, safety, timeout, retry, and idempotency tests.
-- `QA-05` Mobile and desktop journey.
-- `QA-06` Production build and TypeScript checks.
+- `QA-05` Mobile and desktop journey. `DONE` — owner verified the application journey on 2026-07-14.
+- `QA-06` Production build and TypeScript checks. `DONE` on 2026-07-14.
 - `QA-07` Razorpay test payment and manual-access rehearsal.
 
 ## Later
@@ -96,8 +96,10 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 - Presence of real data in the connected Supabase project is unverified.
 - Live magic-link behavior and two-user isolation are verified.
 - No OpenAI API key is configured locally.
+- No Supabase service-role key is configured locally, so product-event and account-deletion operations cannot run yet.
 - Hosting target and production URL are not evidenced in the repository.
+- The Phase 2 program migration has not yet been applied to the connected Supabase project.
 
 ## Next Best Action
 
-Implement the Phase 2 seven-day program state, onboarding start time, unlock rules, progress dashboard, and one editable entry per day.
+Confirm the Phase 2 migration and post-migration RLS test passed, then begin Phase 3 AI reflection configuration and safety-path verification.

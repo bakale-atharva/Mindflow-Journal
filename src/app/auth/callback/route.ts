@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { recordProductEvent } from '@/lib/events'
 import { createClient } from '@/lib/server'
 
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
   }
 
   if (!existingProfile) {
-    await recordProductEvent(user.id, 'first_login')
+    after(() => recordProductEvent(user.id, 'first_login'))
   }
 
   return NextResponse.redirect(new URL('/', requestUrl.origin))

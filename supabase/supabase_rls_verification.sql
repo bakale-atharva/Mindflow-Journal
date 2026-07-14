@@ -1,7 +1,7 @@
 -- MindFlow Journal RLS isolation verification
--- Run only after `supabase_schema.sql` and after creating two allowlisted test
--- Auth users. Replace every placeholder before running. This transaction rolls
--- back all test journal/profile rows when it succeeds.
+-- Run only after `supabase_schema.sql`, `phase_2_program_migration.sql`, and
+-- creating two clean allowlisted Auth users with no journal entries. Replace
+-- every placeholder before running. This transaction rolls back its test rows.
 
 begin;
 
@@ -24,14 +24,38 @@ select set_config(
   true
 );
 
-insert into public.profiles (user_id, email)
-values ('USER_A_UUID', 'user-a@example.com')
-on conflict (user_id) do nothing;
+insert into public.profiles (
+  user_id,
+  email,
+  onboarding_completed_at,
+  program_started_at,
+  is_18_or_older
+)
+values (
+  'USER_A_UUID',
+  'user-a@example.com',
+  now(),
+  now(),
+  true
+)
+on conflict (user_id) do update
+set onboarding_completed_at = coalesce(public.profiles.onboarding_completed_at, excluded.onboarding_completed_at),
+    program_started_at = coalesce(public.profiles.program_started_at, excluded.program_started_at),
+    is_18_or_older = true;
 
-insert into public.journal_entries (id, user_id, content, mood)
+insert into public.journal_entries (
+  id,
+  user_id,
+  program_day,
+  prompt_id,
+  content,
+  mood
+)
 values (
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   'USER_A_UUID',
+  1,
+  'day-1-mental-load',
   'RLS verification entry owned by User A',
   3
 );
@@ -43,9 +67,24 @@ select set_config(
   true
 );
 
-insert into public.profiles (user_id, email)
-values ('USER_B_UUID', 'user-b@example.com')
-on conflict (user_id) do nothing;
+insert into public.profiles (
+  user_id,
+  email,
+  onboarding_completed_at,
+  program_started_at,
+  is_18_or_older
+)
+values (
+  'USER_B_UUID',
+  'user-b@example.com',
+  now(),
+  now(),
+  true
+)
+on conflict (user_id) do update
+set onboarding_completed_at = coalesce(public.profiles.onboarding_completed_at, excluded.onboarding_completed_at),
+    program_started_at = coalesce(public.profiles.program_started_at, excluded.program_started_at),
+    is_18_or_older = true;
 
 do $$
 begin
@@ -95,4 +134,3 @@ end
 $$;
 
 rollback;
-

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import { createAdminClient } from '@/lib/admin'
 import { requireBetaUser } from '@/lib/auth'
 import { recordProductEvent } from '@/lib/events'
@@ -11,6 +12,7 @@ import {
   getPrompt,
   getUnlockTime,
   isCompletionWindowOpen,
+  isProgramComplete,
   PROGRAM_LENGTH,
   type ProgramDay,
   type ProgramDayView,
@@ -119,9 +121,7 @@ export async function getDashboard(): Promise<DashboardData> {
   const startedAt = profile.program_started_at
   const currentDay = startedAt ? getProgramDay(startedAt) : null
   const days = startedAt ? buildProgramDays(startedAt, entries) : []
-  const completionDeadline = startedAt ? new Date(startedAt).getTime() + 10 * 24 * 60 * 60 * 1000 : 0
-  const completed =
-    entries.length === PROGRAM_LENGTH && entries.every((entry) => new Date(entry.created_at).getTime() <= completionDeadline)
+  const completed = startedAt ? isProgramComplete(startedAt, entries) : false
 
   return {
     profile,
@@ -167,7 +167,7 @@ export async function completeOnboarding(_previous: BasicActionState, formData: 
     .eq('user_id', user.id)
 
   if (error) return { status: 'error', error: 'Your program could not be started. Try again.' }
-  await recordProductEvent(user.id, 'program_started')
+  after(() => recordProductEvent(user.id, 'program_started'))
   redirect('/')
 }
 
@@ -222,15 +222,17 @@ export async function saveEntry(_previous: EntryActionState, formData: FormData)
   const { data: entry, error } = await write
   if (error || !entry) return { status: 'error', error: 'Your entry could not be saved. Try again.' }
 
-  await recordProductEvent(user.id, 'entry_saved', { program_day: day })
-  if (day === 2) await recordProductEvent(user.id, 'day_2_return')
+  after(() => recordProductEvent(user.id, 'entry_saved', { program_day: day }))
+  if (!existing && day === 2) after(() => recordProductEvent(user.id, 'day_2_return'))
 
-  const { count } = await supabase
+  const { data: completionEntries } = await supabase
     .from('journal_entries')
-    .select('id', { count: 'exact', head: true })
+    .select('program_day, created_at')
     .eq('user_id', user.id)
     .not('program_day', 'is', null)
-  if (count === PROGRAM_LENGTH) await recordProductEvent(user.id, 'program_completed')
+  if (!existing && isProgramComplete(profile.program_started_at, completionEntries ?? [])) {
+    after(() => recordProductEvent(user.id, 'program_completed'))
+  }
 
   const reflection = profile.ai_processing_consent_at
     ? await generateReflection(entry)

@@ -36,6 +36,21 @@ export function isCompletionWindowOpen(programStartedAt: string | Date, now: str
   return new Date(now).getTime() < new Date(programStartedAt).getTime() + COMPLETION_WINDOW_DAYS * DAY_MS
 }
 
+export function isProgramComplete(
+  programStartedAt: string | Date,
+  entries: ReadonlyArray<{ program_day: number; created_at: string | Date }>
+) {
+  if (entries.length !== PROGRAM_LENGTH) return false
+
+  const submittedDays = new Set(entries.map((entry) => entry.program_day))
+  if (submittedDays.size !== PROGRAM_LENGTH || PROGRAM_PROMPTS.some(({ day }) => !submittedDays.has(day))) {
+    return false
+  }
+
+  const deadline = new Date(programStartedAt).getTime() + COMPLETION_WINDOW_DAYS * DAY_MS
+  return entries.every((entry) => new Date(entry.created_at).getTime() < deadline)
+}
+
 export function buildProgramDays(
   programStartedAt: string,
   entries: ReadonlyArray<{ id: string; program_day: number }>,

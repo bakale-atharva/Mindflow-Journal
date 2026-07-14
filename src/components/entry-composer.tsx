@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Save } from 'lucide-react'
 import { saveEntry, type JournalEntry } from '@/app/actions'
@@ -21,11 +21,19 @@ export function EntryComposer({ day, entry }: { day: ProgramDayView; entry: Jour
   const [state, action, pending] = useActionState(saveEntry, null)
   const [content, setContent] = useState(entry?.content ?? '')
   const [mood, setMood] = useState<number | null>(entry?.mood ?? null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const originalContent = entry?.content ?? ''
 
   useEffect(() => {
     if (state?.status === 'success') router.refresh()
   }, [router, state])
+
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 224), window.innerHeight * 0.6)}px`
+  }, [content])
 
   function discardChanges() {
     if (content === originalContent || window.confirm('Discard the changes in this writing area?')) {
@@ -49,13 +57,13 @@ export function EntryComposer({ day, entry }: { day: ProgramDayView; entry: Jour
             {moods.map((item) => (
               <button key={item.score} type="button" title={item.label} aria-label={`${item.label}, ${item.score} out of 5`} aria-pressed={mood === item.score} onClick={() => setMood(mood === item.score ? null : item.score)} className={cn('group flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-1 py-3 transition-all', mood === item.score ? 'border-ink/25 bg-ink text-white' : 'border-ink/8 bg-porcelain text-ink/48 hover:border-ink/18')}>
                 <span className="size-5 rounded-full border-2 border-white/50 bg-[var(--mood-color)] shadow-sm" style={{ '--mood-color': `var(--mood-${item.score})` } as React.CSSProperties} />
-                <span className="hidden text-[10px] font-medium sm:block">{item.label}</span>
+                <span className="truncate text-[9px] font-medium sm:text-[10px]">{item.label}</span>
               </button>
             ))}
           </div>
         </fieldset>
         <div className="mt-6 rounded-[22px] border border-ink/10 bg-white p-4 transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-lilac/10 sm:p-5">
-          <textarea name="content" required maxLength={10000} value={content} onChange={(event) => setContent(event.target.value)} placeholder="Begin wherever the thought starts…" className="min-h-56 w-full resize-y bg-transparent text-base leading-8 text-ink outline-none placeholder:text-ink/25" />
+          <textarea ref={textareaRef} name="content" required maxLength={10000} value={content} onChange={(event) => setContent(event.target.value)} placeholder="Begin wherever the thought starts…" className="min-h-56 w-full resize-none overflow-y-auto bg-transparent text-base leading-8 text-ink outline-none placeholder:text-ink/25" />
           <div className="mt-3 flex justify-end font-mono text-[10px] text-ink/35">{content.length.toLocaleString()} / 10,000</div>
         </div>
         {state?.status === 'error' ? <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</p> : null}

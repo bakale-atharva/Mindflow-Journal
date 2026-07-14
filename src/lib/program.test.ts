@@ -1,6 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildProgramDays, DAY_MS, getProgramDay, getUnlockTime, isCompletionWindowOpen } from './program.ts'
+import {
+  buildProgramDays,
+  DAY_MS,
+  getProgramDay,
+  getUnlockTime,
+  isCompletionWindowOpen,
+  isProgramComplete,
+} from './program.ts'
 
 const start = '2026-07-01T10:00:00.000Z'
 
@@ -30,4 +37,28 @@ test('unlock timestamps derive from the immutable start instant', () => {
 test('the completion window closes at exactly ten days', () => {
   assert.equal(isCompletionWindowOpen(start, new Date(new Date(start).getTime() + DAY_MS * 10 - 1)), true)
   assert.equal(isCompletionWindowOpen(start, new Date(new Date(start).getTime() + DAY_MS * 10)), false)
+})
+
+test('seven distinct entries submitted before the deadline complete the program', () => {
+  const entries = Array.from({ length: 7 }, (_, index) => ({
+    program_day: index + 1,
+    created_at: new Date(new Date(start).getTime() + index * DAY_MS),
+  }))
+  assert.equal(isProgramComplete(start, entries), true)
+})
+
+test('a duplicate or missing day cannot complete the program', () => {
+  const entries = Array.from({ length: 7 }, (_, index) => ({
+    program_day: index === 6 ? 6 : index + 1,
+    created_at: new Date(new Date(start).getTime() + index * DAY_MS),
+  }))
+  assert.equal(isProgramComplete(start, entries), false)
+})
+
+test('an entry submitted at the ten-day boundary does not complete the program', () => {
+  const entries = Array.from({ length: 7 }, (_, index) => ({
+    program_day: index + 1,
+    created_at: new Date(new Date(start).getTime() + (index === 6 ? 10 : index) * DAY_MS),
+  }))
+  assert.equal(isProgramComplete(start, entries), false)
 })

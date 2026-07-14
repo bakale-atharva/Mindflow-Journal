@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, BookOpenText, Clock3, ShieldCheck } from 'lucide-react'
+import { ArrowRight, BookOpenText, Clock3, Hourglass, ShieldCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import type { DashboardData, JournalEntry } from '@/app/actions'
 import type { ProgramDayView } from '@/lib/program'
@@ -32,12 +32,26 @@ export function TodayView({ dashboard, activeDay, activeEntry }: { dashboard: Da
 
       <div className="mb-6 rounded-[26px] border border-ink/8 bg-white/65 p-4 lg:hidden"><SevenDayPath days={dashboard.days} compact /></div>
 
+      {dashboard.nextUnlockAt ? (
+        <section className="mb-6 flex items-center gap-3 rounded-[22px] bg-ink px-4 py-3.5 text-white lg:hidden">
+          <Clock3 className="size-4 shrink-0 text-seafoam" />
+          <p className="text-sm text-white/78"><span className="font-semibold text-white">Next prompt:</span> {format(new Date(dashboard.nextUnlockAt), 'EEE, MMM d · h:mm a')}</p>
+        </section>
+      ) : null}
+
+      {!dashboard.completionWindowOpen ? (
+        <section className="mb-6 flex items-start gap-3 rounded-[22px] border border-coral/25 bg-coral/10 p-4 text-sm leading-6 text-ink/62">
+          <Hourglass className="mt-0.5 size-4 shrink-0 text-destructive" />
+          <p>The ten-day completion window has ended. Your journal remains available to read, write, and edit, but new entries will not mark the beta complete.</p>
+        </section>
+      ) : null}
+
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-6">
           <section className="relative overflow-hidden rounded-[32px] border border-white/70 shadow-[0_28px_80px_rgba(75,54,112,.12)]">
             <ThoughtContour mood={activeEntry?.mood} />
             <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-6 sm:p-9">
-              <div className="flex items-center justify-between"><span className="rounded-full border border-white/55 bg-white/48 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[.15em] text-ink/55 backdrop-blur">Today’s prompt</span><span className="font-mono text-xs text-ink/45">{String(activeDay.day).padStart(2, '0')} / 07</span></div>
+              <div className="flex items-center justify-between"><span className="rounded-full border border-white/55 bg-white/48 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[.15em] text-ink/55 backdrop-blur">{activeDay.day === dashboard.currentDay ? 'Today’s prompt' : `Day ${activeDay.day} prompt`}</span><span className="font-mono text-xs text-ink/45">{String(activeDay.day).padStart(2, '0')} / 07</span></div>
               <h2 className="max-w-2xl font-heading text-3xl font-semibold leading-[1.06] tracking-[-.05em] text-ink sm:text-5xl">{activeDay.prompt}</h2>
             </div>
           </section>

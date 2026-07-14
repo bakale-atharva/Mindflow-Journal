@@ -12,7 +12,7 @@ export function OnboardingFlow() {
   const [state, action, pending] = useActionState(completeOnboarding, null)
 
   return (
-    <form action={action} className="surface relative w-full max-w-xl overflow-hidden rounded-[32px] p-6 sm:p-9 lg:max-w-4xl lg:min-h-[min(820px,calc(100dvh-5rem))] lg:p-12 xl:p-14">
+    <form action={action} className="surface relative mx-auto w-full max-w-xl overflow-hidden rounded-[32px] p-6 sm:p-9 lg:max-w-4xl lg:min-h-[min(820px,calc(100dvh-5rem))] lg:translate-x-[8%] lg:p-12 xl:p-14">
       <input type="hidden" name="is_18_or_older" value={isAdult ? 'yes' : 'no'} />
       <input type="hidden" name="ai_consent" value={consent ?? ''} />
       <div className="mb-10 flex items-center justify-between">
