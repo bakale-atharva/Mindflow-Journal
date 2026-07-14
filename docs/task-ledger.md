@@ -34,11 +34,11 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 - `SEC-02` Implement email magic-link login, PKCE callback, and session refresh Proxy. `DONE`
 - `SEC-03` Implement normalized-email allowlist checks without exposing the allowlist table. `DONE`
 - `SEC-04` Replace shared user ID with authenticated server identity in every journal operation. `DONE`
-- `SEC-05` Implement per-user row-level security and an isolation verification script. `BLOCKED` pending two-user remote verification.
+- `SEC-05` Implement per-user row-level security and pass the live two-user isolation test. `DONE`
 - `SEC-06` Add sign-out and hide unfinished mock routes from the launch path. `DONE`
-- `SEC-07` Apply `supabase_schema.sql` to the connected project and run `supabase_rls_verification.sql`. `IN PROGRESS` — schema, allowlisted login, session persistence, journal create/read, and unauthorized rejection pass; isolation test remains.
+- `SEC-07` Apply `supabase_schema.sql` and pass the connected-project verification journey. `DONE`
 
-No real users may enter until `SEC-02` through `SEC-05` are verified.
+`SEC-02` through `SEC-05` are verified. The private-data security gate is closed.
 
 ## Product Build
 
@@ -77,8 +77,8 @@ No real users may enter until `SEC-02` through `SEC-05` are verified.
 
 ## Verification
 
-- `QA-01` Allowlist and magic-link tests.
-- `QA-02` Cross-user RLS isolation tests.
+- `QA-01` Allowlist and magic-link tests. `DONE`
+- `QA-02` Cross-user RLS isolation tests. `DONE`
 - `QA-03` Unlock, missed-day, edit, deletion, completion, and 30-day lifecycle tests.
 - `QA-04` AI consent, success, safety, timeout, retry, and idempotency tests.
 - `QA-05` Mobile and desktop journey.
@@ -94,11 +94,10 @@ No real users may enter until `SEC-02` through `SEC-05` are verified.
 
 - Carrd and Razorpay setup require the owner’s external account access.
 - Presence of real data in the connected Supabase project is unverified.
-- Live magic-link behavior and two-user isolation are not yet verified.
-- The invalid Supabase hostname blocker is resolved. Allowlisted login and rejected-email tests pass; two-user isolation remains.
+- Live magic-link behavior and two-user isolation are verified.
 - No OpenAI API key is configured locally.
 - Hosting target and production URL are not evidenced in the repository.
 
 ## Next Best Action
 
-Create a second allowlisted test user and run `supabase_rls_verification.sql`. Do not invite real users until cross-user isolation passes.
+Implement the Phase 2 seven-day program state, onboarding start time, unlock rules, progress dashboard, and one editable entry per day.
