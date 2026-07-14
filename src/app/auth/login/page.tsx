@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
-import { LockKeyhole } from 'lucide-react'
+import { LockKeyhole, ShieldCheck } from 'lucide-react'
 import { MagicLinkForm } from '@/components/magic-link-form'
+import { ThoughtContour } from '@/components/thought-contour'
 import { getBetaUser } from '@/lib/auth'
 
 const AUTH_ERRORS: Record<string, string> = {
@@ -11,59 +12,23 @@ const AUTH_ERRORS: Record<string, string> = {
   'profile-error': 'Your private workspace could not be prepared. Try signing in again.',
 }
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>
-}) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const user = await getBetaUser()
   if (user) redirect('/')
-
   const { error } = await searchParams
   const authError = error ? AUTH_ERRORS[error] : null
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[#070714] px-5 py-10 text-white selection:bg-teal-300/30 sm:px-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(94,234,212,0.09),transparent_30%),radial-gradient(circle_at_20%_80%,rgba(139,92,246,0.13),transparent_35%)]" />
-      <div className="relative mx-auto flex min-h-[calc(100dvh-5rem)] max-w-6xl items-center">
-        <div className="grid w-full gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <section className="max-w-2xl">
-            <div className="mb-12 flex items-center gap-3 text-sm font-semibold tracking-[0.16em] text-white/65 uppercase">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 font-heading text-white">
-                M
-              </span>
-              MindFlow Journal
-            </div>
-            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-teal-accent)]">
-              Private founding beta
-            </p>
-            <h1 className="max-w-xl font-heading text-4xl font-medium leading-[1.08] tracking-[-0.04em] sm:text-6xl">
-              A quieter place for what’s taking up space.
-            </h1>
-            <p className="mt-6 max-w-lg text-base leading-8 text-white/55 sm:text-lg">
-              Enter the email used for your founding access. We’ll send one secure link—no password to remember.
-            </p>
-          </section>
-
-          <section className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 shadow-[0_24px_100px_rgba(0,0,0,0.45)] backdrop-blur sm:p-9">
-            <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-2xl border border-teal-200/20 bg-teal-200/5 text-[var(--color-teal-accent)]">
-              <LockKeyhole className="h-5 w-5" />
-            </div>
-            <h2 className="font-heading text-2xl font-medium">Open your private journal</h2>
-            <p className="mb-8 mt-2 text-sm leading-6 text-white/45">
-              Access is limited to verified founding members aged 18 and over.
-            </p>
-            {authError ? (
-              <p className="mb-5 rounded-xl border border-red-300/15 bg-red-300/5 px-4 py-3 text-sm leading-6 text-red-200">
-                {authError}
-              </p>
-            ) : null}
-            <MagicLinkForm />
-            <p className="mt-8 border-t border-white/8 pt-6 text-xs leading-5 text-white/35">
-              MindFlow is a journaling and self-reflection tool. It does not provide therapy, diagnosis, medical advice, or crisis support.
-            </p>
-          </section>
-        </div>
+    <div className="min-h-dvh px-4 py-4 sm:px-7 sm:py-7">
+      <div className="mx-auto grid min-h-[calc(100dvh-2rem)] max-w-[1320px] overflow-hidden rounded-[32px] border border-white/70 bg-white/45 shadow-[0_30px_100px_rgba(67,55,91,.12)] lg:grid-cols-[1.08fr_.92fr] sm:min-h-[calc(100dvh-3.5rem)]">
+        <section className="relative hidden overflow-hidden p-10 lg:flex lg:flex-col lg:justify-between">
+          <ThoughtContour mood={4} className="absolute inset-0 min-h-0 rounded-none" />
+          <div className="relative z-10 flex items-center gap-3"><span className="grid size-10 place-items-center rounded-[14px] bg-ink text-sm font-semibold text-white">M</span><span className="font-heading text-xl font-semibold tracking-[-.04em]">MindFlow Journal</span></div>
+          <div className="relative z-10 max-w-2xl pb-6"><p className="font-mono text-[11px] uppercase tracking-[.19em] text-ink/52">Private founding beta</p><h1 className="mt-5 font-heading text-6xl font-semibold leading-[.96] tracking-[-.07em] text-ink xl:text-7xl">A quieter place for what’s taking up space.</h1><p className="mt-6 max-w-lg text-base leading-8 text-ink/62">One focused prompt each day, a private place to answer, and a concise reflection when you choose it.</p></div>
+        </section>
+        <section className="flex items-center justify-center bg-porcelain/78 p-5 sm:p-10 lg:p-14">
+          <div className="w-full max-w-md"><div className="mb-12 flex items-center gap-3 lg:hidden"><span className="grid size-10 place-items-center rounded-[14px] bg-ink text-sm font-semibold text-white">M</span><span className="font-heading text-xl font-semibold tracking-[-.04em]">MindFlow</span></div><span className="grid size-12 place-items-center rounded-2xl bg-orchid-mist text-primary"><LockKeyhole className="size-5" /></span><p className="mt-8 font-mono text-[10px] uppercase tracking-[.18em] text-primary">Founding access</p><h2 className="mt-3 font-heading text-4xl font-semibold tracking-[-.055em] text-ink">Open your private journal.</h2><p className="mt-4 text-sm leading-6 text-ink/52">Enter the email used for your founding access. We’ll send one secure link—no password to remember.</p>{authError ? <p className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">{authError}</p> : null}<div className="mt-8"><MagicLinkForm /></div><div className="mt-9 flex items-start gap-3 border-t border-ink/8 pt-6 text-xs leading-5 text-ink/40"><ShieldCheck className="mt-0.5 size-4 shrink-0" />For adults 18+. MindFlow is a journaling and self-reflection tool, not clinical care.</div></div>
+        </section>
       </div>
     </div>
   )

@@ -2,29 +2,24 @@
 
 import { usePathname } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
-import { TopBar } from '@/components/layout/topbar'
 import { BottomNav } from '@/components/layout/bottom-nav'
-import { ModalProvider } from '@/components/modal-provider'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  if (pathname.startsWith('/auth')) {
+  if (pathname.startsWith('/auth') || pathname.startsWith('/onboarding')) {
     return <main className="min-h-dvh w-full">{children}</main>
   }
 
   return (
-    <div className="flex h-full min-h-full w-full flex-col overflow-hidden bg-secondary md:flex-row">
+    <div className="min-h-dvh bg-background md:grid md:grid-cols-[224px_minmax(0,1fr)]">
       <Sidebar />
-      <div className="relative flex h-full flex-1 flex-col overflow-hidden">
-        <TopBar />
-        <main className="relative flex-1 overflow-y-auto pb-16 md:pb-0">
+      <div className="min-w-0">
+        <main className="min-h-dvh pb-24 md:pb-0">
           {children}
         </main>
         <BottomNav />
       </div>
-      <ModalProvider />
     </div>
   )
 }
-

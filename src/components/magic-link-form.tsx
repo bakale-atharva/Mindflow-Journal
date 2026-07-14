@@ -20,12 +20,12 @@ export function MagicLinkForm() {
       <div>
         <label
           htmlFor="email"
-          className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-white/50"
+          className="mb-2 block font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-ink/42"
         >
           Founding access email
         </label>
-        <div className="group flex items-center gap-3 border-b border-white/15 py-3 transition-colors focus-within:border-[var(--color-teal-accent)]">
-          <Mail className="h-5 w-5 text-white/35 transition-colors group-focus-within:text-[var(--color-teal-accent)]" />
+        <div className="group flex items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-3 transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-lilac/10">
+          <Mail className="h-5 w-5 text-ink/30 transition-colors group-focus-within:text-primary" />
           <input
             id="email"
             name="email"
@@ -34,7 +34,7 @@ export function MagicLinkForm() {
             required
             autoFocus
             placeholder="you@example.com"
-            className="min-w-0 flex-1 bg-transparent text-lg text-white outline-none placeholder:text-white/20"
+            className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink/24"
           />
         </div>
       </div>
@@ -42,7 +42,7 @@ export function MagicLinkForm() {
       <button
         type="submit"
         disabled={pending}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3.5 font-semibold text-[#0b0914] transition hover:bg-[var(--color-teal-accent)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-teal-accent)] disabled:cursor-not-allowed disabled:opacity-55"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3.5 font-semibold text-white shadow-[0_12px_30px_rgba(36,33,53,.18)] transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-55"
       >
         {pending ? 'Sending secure link…' : 'Email me a sign-in link'}
         {pending ? null : <ArrowRight className="h-4 w-4" />}
@@ -52,10 +52,10 @@ export function MagicLinkForm() {
         aria-live="polite"
         className={`min-h-6 text-sm leading-6 ${
           state.status === 'error'
-            ? 'text-red-300'
+            ? 'text-red-700'
             : state.status === 'success'
-              ? 'text-emerald-300'
-              : 'text-white/45'
+              ? 'text-emerald-700'
+              : 'text-ink/45'
         }`}
       >
         {state.status === 'success' ? (
@@ -70,4 +70,3 @@ export function MagicLinkForm() {
     </form>
   )
 }
-

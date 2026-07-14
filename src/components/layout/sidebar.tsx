@@ -1,68 +1,38 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Plus, ShieldCheck } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { BookOpenText, Feather, Settings } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-const navItems = [
-  { href: "/", icon: Home, label: "Journal" },
-];
+const items = [
+  { href: '/', icon: Feather, label: 'Today' },
+  { href: '/journal', icon: BookOpenText, label: 'Journal' },
+  { href: '/settings', icon: Settings, label: 'Settings' },
+]
 
 export function Sidebar() {
-  const pathname = usePathname();
-
+  const pathname = usePathname()
   return (
-    <aside className="hidden md:flex flex-col w-64 h-full bg-sidebar border-r border-border p-6 flex-shrink-0">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-heading font-bold text-lg">
-          M
-        </div>
-        <span className="font-heading font-bold text-xl text-foreground">MindFlow</span>
-      </div>
-
-      <Link 
-        href="?new=true"
-        className="flex items-center justify-center w-full bg-brand-500 hover:bg-brand-600 text-white shadow-glow mb-8 h-12 rounded-xl text-base font-semibold transition-all duration-200 hover:-translate-y-0.5"
-      >
-        <Plus className="w-5 h-5 mr-2" />
-        New Entry
+    <aside className="sticky top-0 hidden h-dvh flex-col border-r border-ink/8 bg-white/55 px-5 py-7 backdrop-blur-xl md:flex">
+      <Link href="/" className="flex items-center gap-3 rounded-2xl px-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+        <span className="grid size-10 place-items-center rounded-[14px] bg-ink text-sm font-semibold text-white">M</span>
+        <span className="font-heading text-xl font-semibold tracking-[-0.04em] text-ink">MindFlow</span>
       </Link>
-
-      <nav className="flex-1 flex flex-col gap-2">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
+      <nav className="mt-14 space-y-2" aria-label="Main navigation">
+        {items.map((item) => {
+          const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
-                isActive
-                  ? "bg-brand-50 text-brand-600"
-                  : "text-secondary-text hover:bg-tertiary hover:text-foreground"
-              )}
-            >
-              <item.icon className={cn("w-5 h-5", isActive ? "text-brand-500" : "text-muted-text")} />
-              {item.label}
+            <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors', active ? 'bg-ink text-white shadow-[0_12px_34px_rgba(36,33,53,.16)]' : 'text-ink/58 hover:bg-white hover:text-ink')}>
+              <item.icon className="size-[18px]" strokeWidth={1.8} />{item.label}
             </Link>
-          );
+          )
         })}
       </nav>
-
-      <div className="mt-auto pt-6 border-t border-border flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-medium">
-          A
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">Founding beta</p>
-          <div className="flex items-center gap-1 text-xs font-medium text-brand-600">
-            <ShieldCheck className="h-3 w-3" />
-            Private workspace
-          </div>
-        </div>
+      <div className="mt-auto rounded-[22px] border border-ink/8 bg-white/65 p-4">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/42">Private by design</p>
+        <p className="mt-2 text-sm leading-6 text-ink/66">Your journal stays tied to your account and out of product analytics.</p>
       </div>
     </aside>
-  );
+  )
 }

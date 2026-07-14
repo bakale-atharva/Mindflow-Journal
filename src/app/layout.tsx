@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 
-const inter = Inter({
+const instrumentSans = Instrument_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
 });
 
-const spaceGrotesk = Space_Grotesk({
+const bricolage = Bricolage_Grotesque({
   variable: "--font-heading",
   subsets: ["latin"],
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -26,9 +32,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`${instrumentSans.variable} ${bricolage.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="h-full min-h-full overflow-hidden bg-secondary">
+      <body className="min-h-full bg-background">
         <AppShell>{children}</AppShell>
       </body>
     </html>

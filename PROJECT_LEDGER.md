@@ -6,7 +6,7 @@ Last updated: 2026-07-13
 
 MindFlow Journal is a calm, direct, non-clinical AI-guided journaling product for people who overthink, feel mentally cluttered, or struggle with journaling consistency. The immediate business goal is to acquire paying founding users quickly, using free distribution by default and removing product work that does not directly improve activation, learning, or revenue.
 
-Current stage: Phase 1 code and database schema are active; authentication URL setup, allowlist testing, and live two-user isolation verification remain before the security gate can close.
+Current stage: Phase 1 code, database schema, and allowlist authentication are verified; live two-user isolation verification remains before the security gate can close.
 
 Confidence: high for the approved founding-beta scope and repository state. Historical drafts were not available, so the canonical documents were reconstructed and approved from the supplied context and grilling decisions.
 
@@ -71,6 +71,8 @@ Confidence: high for the approved founding-beta scope and repository state. Hist
 - Verified the Phase 1 application with a successful production build and TypeScript check.
 - Verified locally that `/` redirects unauthenticated requests to `/auth/login` and that the login page renders successfully.
 - Applied the complete Phase 1 schema to the connected Supabase project without SQL errors on 2026-07-14.
+- Verified an allowlisted user can receive a magic link, sign in, persist the session, and create and view a journal entry.
+- Verified a non-allowlisted email is rejected from founding-beta access.
 
 ## In Progress / Uncommitted Work
 
@@ -157,6 +159,7 @@ These changes exist locally but are not committed. They must be reviewed and tes
 ## Blockers and Risks
 
 - The Phase 1 schema is active, but live magic-link behavior and cross-user isolation are not yet certified.
+- Allowlist authentication now passes for both an authorized user and a rejected unauthorized email. Cross-user isolation verification remains.
 - Several impressive-looking screens use random or mock data and may create false confidence about product readiness.
 - AI functionality is named in the product promise but is not yet implemented in the inspected core flow.
 - Landing page, payment, access granting, and analytics are not evidenced in the repository.
@@ -166,7 +169,7 @@ These changes exist locally but are not committed. They must be reviewed and tes
 
 ## Next Best Action
 
-Configure the Supabase Site URL and local `/auth/callback` redirect, then create an allowlisted test user and prove the magic-link journey before running the two-user isolation test.
+Create a second allowlisted test user and run `supabase_rls_verification.sql` to prove neither user can read, modify, or delete the other user’s journal data.
 
 ## Suggested Execution Plan
 
@@ -188,3 +191,5 @@ Configure the Supabase Site URL and local `/auth/callback` redirect, then create
 - 2026-07-13: Phase 0 completed. Seven canonical documents created. Grilling session locked age, refund, consent, founder-access, deletion, data-lifecycle, missed-day, and discount decisions.
 - 2026-07-13: Phase 1 implemented locally. Secure auth, allowlist boundary, authenticated journal operations, complete database SQL, and RLS verification script added. Production build passed; remote database application and isolation verification remain.
 - 2026-07-14: The complete Phase 1 schema was applied to the connected Supabase project without errors. Authentication and isolation verification remain.
+- 2026-07-14: Diagnosed the allowlist failure as an obsolete or incorrect Supabase project URL. The owner replaced it with the active project configuration and confirmed the connection works.
+- 2026-07-14: Allowlisted magic-link login, session persistence, journal entry creation/read, and non-allowlisted rejection were verified successfully. Two-user RLS isolation remains.

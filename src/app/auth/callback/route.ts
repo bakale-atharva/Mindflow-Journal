@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { recordProductEvent } from '@/lib/events'
 import { createClient } from '@/lib/server'
 
 function loginRedirect(requestUrl: URL, error: string) {
@@ -41,6 +42,18 @@ export async function GET(request: Request) {
     return loginRedirect(requestUrl, 'access-required')
   }
 
+  const { data: existingProfile, error: existingProfileError } = await supabase
+    .from('profiles')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (existingProfileError) {
+    console.error('Profile lookup failed:', existingProfileError.message)
+    await supabase.auth.signOut()
+    return loginRedirect(requestUrl, 'profile-error')
+  }
+
   const { error: profileError } = await supabase.from('profiles').upsert(
     {
       user_id: user.id,
@@ -55,6 +68,9 @@ export async function GET(request: Request) {
     return loginRedirect(requestUrl, 'profile-error')
   }
 
+  if (!existingProfile) {
+    await recordProductEvent(user.id, 'first_login')
+  }
+
   return NextResponse.redirect(new URL('/', requestUrl.origin))
 }
-

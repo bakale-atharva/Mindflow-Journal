@@ -36,7 +36,7 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 - `SEC-04` Replace shared user ID with authenticated server identity in every journal operation. `DONE`
 - `SEC-05` Implement per-user row-level security and an isolation verification script. `BLOCKED` pending two-user remote verification.
 - `SEC-06` Add sign-out and hide unfinished mock routes from the launch path. `DONE`
-- `SEC-07` Apply `supabase_schema.sql` to the connected project and run `supabase_rls_verification.sql`. `IN PROGRESS` — schema applied without errors; isolation test remains.
+- `SEC-07` Apply `supabase_schema.sql` to the connected project and run `supabase_rls_verification.sql`. `IN PROGRESS` — schema, allowlisted login, session persistence, journal create/read, and unauthorized rejection pass; isolation test remains.
 
 No real users may enter until `SEC-02` through `SEC-05` are verified.
 
@@ -95,9 +95,10 @@ No real users may enter until `SEC-02` through `SEC-05` are verified.
 - Carrd and Razorpay setup require the owner’s external account access.
 - Presence of real data in the connected Supabase project is unverified.
 - Live magic-link behavior and two-user isolation are not yet verified.
+- The invalid Supabase hostname blocker is resolved. Allowlisted login and rejected-email tests pass; two-user isolation remains.
 - No OpenAI API key is configured locally.
 - Hosting target and production URL are not evidenced in the repository.
 
 ## Next Best Action
 
-Configure the Supabase Site URL and local callback URL, create an allowlisted test user, and prove the magic-link journey. Then run `supabase_rls_verification.sql` with two users. Do not invite real users until it passes.
+Create a second allowlisted test user and run `supabase_rls_verification.sql`. Do not invite real users until cross-user isolation passes.
