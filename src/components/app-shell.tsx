@@ -7,7 +7,7 @@ import { BottomNav } from '@/components/layout/bottom-nav'
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  if (pathname.startsWith('/auth') || pathname.startsWith('/onboarding')) {
+  if (pathname.startsWith('/auth') || pathname.startsWith('/onboarding') || pathname.startsWith('/waitlist')) {
     return <main className="min-h-dvh w-full">{children}</main>
   }
 

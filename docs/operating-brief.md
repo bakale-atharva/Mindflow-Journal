@@ -73,7 +73,7 @@ No real beta user should be invited until authentication and per-user row-level 
 - Carrd remains outside the product repository.
 - Supabase remains the database and authentication provider.
 - Acquisition starts only after the payment-to-reflection journey passes testing.
-- Explicit OpenAI-processing consent is required before the first AI reflection.
+- Explicit Groq-processing consent is required before the first AI reflection.
 - Users who decline AI processing may still save private entries without reflections.
 - The founder does not read journal entries for routine operations or support.
 - Users can permanently delete their account and journal data.

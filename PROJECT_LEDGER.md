@@ -38,7 +38,7 @@ Confidence: high for the approved founding-beta scope and repository state. Hist
 - Completed the Phase 0 source-of-truth set under `docs/`: operating brief, product blueprint, MVP specification, task ledger, customer acquisition plan, copy library, and launch runbook.
 - Locked the founding-beta funnel: Carrd, Razorpay, manual allowlist, email magic link, and web app.
 - Locked the beta as 18+ with a seven-day refund window.
-- Locked explicit OpenAI-processing consent and a private journaling path without AI.
+- Locked explicit Groq-processing consent and a private journaling path without AI.
 - Locked no founder access to journal content for routine support.
 - Locked permanent user-controlled account/data deletion.
 - Locked a 30-day migrate-or-delete window when beta ends.
@@ -48,7 +48,7 @@ Confidence: high for the approved founding-beta scope and repository state. Hist
 
 - Created and connected a Git repository.
 - Scaffolded a Next.js 16.2.9, React 19, TypeScript, and Tailwind CSS application.
-- Added UI/component foundations, animation support, Supabase packages, and the OpenAI SDK dependency.
+- Added UI/component foundations, animation support, Supabase packages, and the Groq SDK dependency.
 - Added a Supabase client and initial `journal_entries` schema.
 - Built an onboarding UI prototype with goal, reminder-time, and first-prompt steps.
 - Built responsive navigation/layout components.
@@ -159,7 +159,7 @@ These changes must be committed after the live migration and journey checks, or 
 
 - Phase 1 private-data isolation and allowlist authentication are certified against the connected Supabase project.
 - Phase 2 program invariants are not live until its Supabase migration is applied.
-- AI functionality exists but is not configured or verified against a live OpenAI key.
+- AI functionality exists but is not configured or verified against a live Groq key.
 - Landing page, payment, access granting, and analytics are not evidenced in the repository.
 - Product-event and account-deletion operations require a Supabase service-role key that is not configured locally.
 - Some current copy uses mental-wellness/anxiety language that should be reviewed against the non-clinical positioning.

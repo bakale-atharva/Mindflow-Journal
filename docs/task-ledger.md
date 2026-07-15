@@ -51,7 +51,7 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 
 ## AI Build
 
-- `AI-01` Configure server-only OpenAI Responses API client and configurable model. `IN PROGRESS` — implementation exists; environment configuration remains.
+- `AI-01` Configure server-only Groq Responses API client and configurable model. `IN PROGRESS` — implementation exists; environment configuration remains.
 - `AI-02` Enforce consent, moderation, and the immediate-danger redirect. `IN PROGRESS`
 - `AI-03` Implement structured reflection and optional question. `IN PROGRESS`
 - `AI-04` Preserve saved entries on failure and add idempotent retry. `IN PROGRESS`
@@ -95,7 +95,7 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 - Carrd and Razorpay setup require the owner’s external account access.
 - Presence of real data in the connected Supabase project is unverified.
 - Live magic-link behavior and two-user isolation are verified.
-- No OpenAI API key is configured locally.
+- No Groq API key is configured locally.
 - No Supabase service-role key is configured locally, so product-event and account-deletion operations cannot run yet.
 - Hosting target and production URL are not evidenced in the repository.
 - The Phase 2 program migration has not yet been applied to the connected Supabase project.

@@ -96,7 +96,7 @@ Consider only after paid conversion and return behavior are demonstrated:
 - Language: TypeScript.
 - Styling: Tailwind CSS with existing component primitives.
 - Authentication and database: Supabase.
-- AI: OpenAI Responses API, server-side only.
+- AI: Groq Responses API, server-side only.
 - Payments: Razorpay Standard Payment Link, manually verified during beta.
 - Landing page: Carrd, maintained outside this repository.
 - Deployment: a managed Next.js host compatible with the existing application; final environment is not yet evidenced in the repository.
@@ -126,7 +126,7 @@ The system must:
 
 ## Data Lifecycle and Access
 
-- Require explicit consent before sending entry text to OpenAI.
+- Require explicit consent before sending entry text to Groq.
 - Allow private journaling without AI processing when consent is declined.
 - Users may permanently delete their account and journal data at any time.
 - The founder must not read entry content for routine support; diagnose issues from IDs, timestamps, logs, and user-provided error details.

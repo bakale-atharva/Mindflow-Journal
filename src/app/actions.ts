@@ -50,6 +50,9 @@ export type ProfileState = {
   program_started_at: string | null
   is_18_or_older: boolean
   ai_processing_consent_at: string | null
+  ai_processing_provider: string | null
+  ai_consent_version: number | null
+  ai_processing_consent_revoked_at: string | null
 }
 
 export type DashboardData = {
@@ -86,7 +89,7 @@ export async function getDashboard(): Promise<DashboardData> {
   const supabase = await createClient()
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('email, onboarding_completed_at, program_started_at, is_18_or_older, ai_processing_consent_at')
+    .select('email, onboarding_completed_at, program_started_at, is_18_or_older, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at')
     .eq('user_id', user.id)
     .single()
 
@@ -161,6 +164,9 @@ export async function completeOnboarding(_previous: BasicActionState, formData: 
     .update({
       is_18_or_older: true,
       ai_processing_consent_at: consentChoice === 'yes' ? now : null,
+      ai_processing_provider: consentChoice === 'yes' ? 'groq' : null,
+      ai_consent_version: consentChoice === 'yes' ? 2 : null,
+      ai_processing_consent_revoked_at: null,
       onboarding_completed_at: now,
       program_started_at: now,
     })
@@ -187,7 +193,7 @@ export async function saveEntry(_previous: EntryActionState, formData: FormData)
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('program_started_at, onboarding_completed_at, ai_processing_consent_at')
+    .select('program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at')
     .eq('user_id', user.id)
     .single()
 
@@ -234,7 +240,13 @@ export async function saveEntry(_previous: EntryActionState, formData: FormData)
     after(() => recordProductEvent(user.id, 'program_completed'))
   }
 
-  const reflection = profile.ai_processing_consent_at
+  const hasGroqConsent =
+    profile.ai_processing_consent_at !== null &&
+    profile.ai_processing_consent_revoked_at === null &&
+    profile.ai_processing_provider === 'groq' &&
+    profile.ai_consent_version === 2;
+
+  const reflection = hasGroqConsent
     ? await generateReflection(entry)
     : { status: 'not_requested' as const, reflection: null, question: null }
 
@@ -252,10 +264,17 @@ export async function retryReflection(_previous: BasicActionState, formData: For
   const supabase = await createClient()
   const [{ data: entry }, { data: profile }] = await Promise.all([
     supabase.from('journal_entries').select('id, user_id, content').eq('id', id).eq('user_id', user.id).single(),
-    supabase.from('profiles').select('ai_processing_consent_at').eq('user_id', user.id).single(),
+    supabase.from('profiles').select('ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at').eq('user_id', user.id).single(),
   ])
   if (!entry) return { status: 'error', error: 'This entry could not be found.' }
-  if (!profile?.ai_processing_consent_at) return { status: 'error', error: 'Turn on AI reflections in Settings before retrying.' }
+
+  const hasGroqConsent =
+    profile?.ai_processing_consent_at !== null &&
+    profile?.ai_processing_consent_revoked_at === null &&
+    profile?.ai_processing_provider === 'groq' &&
+    profile?.ai_consent_version === 2;
+
+  if (!hasGroqConsent) return { status: 'error', error: 'Turn on AI reflections in Settings before retrying.' }
 
   const result = await generateReflection(entry, true)
   revalidatePath('/')
@@ -282,13 +301,47 @@ export async function updateAiConsent(_previous: BasicActionState, formData: For
   const user = await requireBetaUser()
   const enabled = formData.get('ai_consent') === 'yes'
   const supabase = await createClient()
+  const now = new Date().toISOString()
   const { error } = await supabase
     .from('profiles')
-    .update({ ai_processing_consent_at: enabled ? new Date().toISOString() : null })
+    .update({ 
+      ai_processing_consent_at: enabled ? now : null,
+      ai_processing_provider: enabled ? 'groq' : null,
+      ai_consent_version: enabled ? 2 : null,
+      ai_processing_consent_revoked_at: enabled ? null : now
+    })
     .eq('user_id', user.id)
   if (error) return { status: 'error', error: 'Your reflection preference could not be updated.' }
   revalidatePath('/settings')
   return { status: 'success', message: enabled ? 'AI reflections are on.' : 'AI reflections are off.' }
+}
+
+export async function markReflectionViewed(entryId: string): Promise<void> {
+  const user = await requireBetaUser()
+  const supabase = await createClient()
+  
+  // Verify ownership and get reflection
+  const { data: reflection, error: verifyError } = await supabase
+    .from('ai_reflections')
+    .select('viewed_at, status')
+    .eq('entry_id', entryId)
+    .eq('user_id', user.id)
+    .single()
+    
+  if (verifyError || !reflection || reflection.status !== 'complete') return
+  if (reflection.viewed_at) return // Already viewed
+
+  const { error: updateError } = await supabase
+    .from('ai_reflections')
+    .update({ viewed_at: new Date().toISOString() })
+    .eq('entry_id', entryId)
+    .eq('user_id', user.id)
+    
+  if (!updateError) {
+    // Determine program day if possible
+    const { data: entry } = await supabase.from('journal_entries').select('program_day').eq('id', entryId).single()
+    after(() => recordProductEvent(user.id, 'reflection_viewed', entry ? { program_day: entry.program_day } : undefined))
+  }
 }
 
 export async function deleteAccount(_previous: BasicActionState, formData: FormData): Promise<BasicActionState> {

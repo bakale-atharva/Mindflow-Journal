@@ -10,7 +10,7 @@ Acquire five paid founding users, repair the complete journey, then expand towar
 ## Offer
 
 - 7-Day Emotional Reset for adults aged 18+.
-- Seven focused daily prompts, private entries, optional mood check-ins, and one concise AI reflection when the user consents to OpenAI processing.
+- Seven focused daily prompts, private entries, optional mood check-ins, and one concise AI reflection when the user consents to Groq processing.
 - ₹299 one-time with a seven-day refund window.
 - Limited to 20 founding users.
 - Access delivered within 12 hours after captured-payment verification.

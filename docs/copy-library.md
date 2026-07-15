@@ -96,7 +96,7 @@ You can use a general AI tool for prompts. MindFlow keeps one bounded process to
 
 ### “What happens to what I write?”
 
-Your entries are tied to your account and are not shared with other users. The founder does not read entries for routine support. Entry text is sent to OpenAI only when you consent to receive AI reflections. You can permanently delete your account and journal data.
+Your entries are tied to your account and are not shared with other users. The founder does not read entries for routine support. Entry text is sent to Groq only when you consent to receive AI reflections. You can permanently delete your account and journal data.
 
 ### “What happens after beta?”
 
@@ -152,7 +152,7 @@ This email does not have active founding access. If you already paid, use the sa
 
 ### AI consent
 
-To generate a reflection, MindFlow sends this entry text to OpenAI. I understand this and consent to AI processing. I can decline and continue journaling without AI reflections.
+To generate a reflection, MindFlow sends this entry text to Groq. I understand this and consent to AI processing. I can decline and continue journaling without AI reflections.
 
 ### AI failure
 
@@ -172,7 +172,7 @@ MindFlow uses automated systems to generate reflections from journal entries aft
 
 ### Privacy summary
 
-MindFlow stores account details, journal entries, optional moods, and generated reflections to provide the service. Entry text is sent to OpenAI only for users who consent to reflections. The founder does not read entries for routine support, and journal content is not placed in marketing analytics or the customer tracker.
+MindFlow stores account details, journal entries, optional moods, and generated reflections to provide the service. Entry text is sent to Groq only for users who consent to reflections. The founder does not read entries for routine support, and journal content is not placed in marketing analytics or the customer tracker.
 
 ### Refund baseline
 

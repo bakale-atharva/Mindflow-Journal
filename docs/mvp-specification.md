@@ -53,7 +53,7 @@ Deliver a secure seven-day guided journaling experience that a founding user can
 
 - First login shows the product promise, privacy boundary, seven-day structure, and non-clinical limitation.
 - The user confirms they are at least 18 years old.
-- The user chooses whether entry text may be sent to OpenAI for reflections.
+- The user chooses whether entry text may be sent to Groq for reflections.
 - The user explicitly starts the program.
 - Starting records a single immutable program start timestamp.
 - Day 1 becomes available immediately.
@@ -82,7 +82,7 @@ Deliver a secure seven-day guided journaling experience that a founding user can
 ### AI reflection
 
 - Moderation runs before generation.
-- Reflection generation runs only when the user has explicitly consented to OpenAI processing.
+- Reflection generation runs only when the user has explicitly consented to Groq processing.
 - A user who declines consent can save and manage entries without AI reflections.
 - Normal output contains `reflection` of 2–3 sentences and at most 80 words.
 - `question` is optional and at most 20 words.
@@ -178,5 +178,5 @@ Approved notice:
 - Mobile and desktop flows work without horizontal overflow or inaccessible controls.
 - The production build and TypeScript checks pass.
 - The payment-to-first-reflection runbook succeeds with a Razorpay test payment before launch.
-- A user who declines AI consent can complete entries without any OpenAI request.
+- A user who declines AI consent can complete entries without any Groq request.
 - Account deletion removes the authenticated user’s private product data and blocks subsequent access.

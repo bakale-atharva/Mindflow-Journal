@@ -49,9 +49,9 @@ export function OnboardingFlow() {
         <section>
           <span className="grid size-12 place-items-center rounded-2xl bg-coral/20 text-ink"><Sparkles className="size-5" /></span>
           <h1 className="mt-7 font-heading text-4xl font-semibold tracking-[-.05em] text-ink">Would you like a reflection?</h1>
-          <p className="mt-4 text-base leading-7 text-ink/60">To generate one, MindFlow sends your entry text to OpenAI. You can decline and use the complete journal without AI.</p>
+          <p className="mt-4 text-base leading-7 text-ink/60">MindFlow sends the text of each saved entry to Groq for automated safety screening and one concise AI-generated reflection. This is optional. If you decline, your journal will still work normally.</p>
           <div className="mt-7 grid gap-3">
-            {[{ value: 'yes' as const, title: 'Yes, include reflections', body: 'Send each saved entry for a short, non-clinical reflection.' }, { value: 'no' as const, title: 'No, keep it journal-only', body: 'Save entries privately without sending their text to OpenAI.' }].map((option) => (
+            {[{ value: 'yes' as const, title: 'Yes, include reflections', body: 'Send each saved entry for a short, non-clinical reflection.' }, { value: 'no' as const, title: 'No, keep it journal-only', body: 'Save entries privately without sending their text to Groq.' }].map((option) => (
               <button key={option.value} type="button" onClick={() => setConsent(option.value)} className={cn('rounded-[22px] border p-5 text-left transition-colors', consent === option.value ? 'border-primary/40 bg-orchid-mist/55' : 'border-ink/10 bg-white hover:border-ink/20')}>
                 <span className="font-semibold text-ink">{option.title}</span><span className="mt-1 block text-sm leading-6 text-ink/55">{option.body}</span>
               </button>

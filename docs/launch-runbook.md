@@ -113,7 +113,7 @@ Evening:
 
 - Keep entries saved and available.
 - Show one retry to consenting users.
-- Do not call OpenAI for users who declined consent.
+- Do not call Groq for users who declined consent.
 - Pause acquisition only if first-use value is consistently unavailable.
 
 ### Unsafe or clinical AI output
