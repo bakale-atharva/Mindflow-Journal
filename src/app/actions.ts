@@ -54,10 +54,17 @@ export type Day4ResponseData = {
   usual_moment: string;
 };
 
+export type Day5ResponseData = {
+  version: 1;
+  note_to_friend: string;
+  line_to_keep: string;
+};
+
 export type StructuredResponseData =
   | Day2ResponseData
   | Day3ResponseData
   | Day4ResponseData
+  | Day5ResponseData
   | null;
 
 export type JournalEntry = {
@@ -706,6 +713,135 @@ export async function saveDayFourEntry(
     return {
       status: "error",
       error: "Your Day 4 entry could not be saved. Try again.",
+    };
+
+  after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
+
+  const { data: completionEntries } = await supabase
+    .from("journal_entries")
+    .select("program_day, created_at")
+    .eq("user_id", user.id)
+    .not("program_day", "is", null);
+  if (
+    !existing &&
+    isProgramComplete(profile.program_started_at, completionEntries ?? [])
+  ) {
+    after(() => recordProductEvent(user.id, "program_completed"));
+  }
+
+  const hasGroqConsent =
+    profile.ai_processing_consent_at !== null &&
+    profile.ai_processing_consent_revoked_at === null &&
+    profile.ai_processing_provider === "groq" &&
+    profile.ai_consent_version === 2;
+
+  const reflection = hasGroqConsent
+    ? await generateReflection(entry)
+    : { status: "not_requested" as const, reflection: null, question: null };
+
+  revalidatePath("/");
+  revalidatePath("/journal");
+  revalidatePath(`/entry/${entry.id}`);
+  return { status: "success", entryId: entry.id, reflection };
+}
+
+export async function saveDayFiveEntry(
+  _previous: EntryActionState,
+  formData: FormData,
+): Promise<EntryActionState> {
+  const user = await requireBetaUser();
+  const noteValue = formData.get("note_to_friend");
+  const note_to_friend = typeof noteValue === "string" ? noteValue.trim() : "";
+  const lineValue = formData.get("line_to_keep");
+  const line_to_keep = typeof lineValue === "string" ? lineValue.trim() : "";
+  const day = 5;
+  const prompt = getPrompt(day);
+  const mood = parseMood(formData.get("mood"));
+
+  if (!note_to_friend) {
+    return {
+      status: "error",
+      error: "Write what you would say before saving Day 5.",
+    };
+  }
+
+  const combinedParts = [];
+  combinedParts.push(`What I would say:\n${note_to_friend}`);
+  if (line_to_keep) combinedParts.push(`A line to keep:\n${line_to_keep}`);
+  const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
+
+  if (content.length > 10_000) {
+    return {
+      status: "error",
+      error: "Keep your Day 5 entry under 10,000 characters.",
+    };
+  }
+  if (!prompt)
+    return { status: "error", error: "Day 5 prompt not found." };
+  if (mood === undefined)
+    return {
+      status: "error",
+      error: "Choose a mood from 1 to 5, or leave it blank.",
+    };
+
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select(
+      "program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at",
+    )
+    .eq("user_id", user.id)
+    .single();
+
+  if (!profile?.program_started_at || !profile.onboarding_completed_at) {
+    return {
+      status: "error",
+      error: "Start your seven-day program before writing an entry.",
+    };
+  }
+  if (day > getProgramDay(profile.program_started_at)) {
+    return { status: "error", error: "This day has not unlocked yet." };
+  }
+
+  const { data: existing } = await supabase
+    .from("journal_entries")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("program_day", day)
+    .maybeSingle();
+
+  const response_data: Day5ResponseData = {
+    version: 1,
+    note_to_friend,
+    line_to_keep,
+  };
+
+  const write = existing
+    ? supabase
+        .from("journal_entries")
+        .update({ content, response_data, mood, prompt_id: prompt.id })
+        .eq("id", existing.id)
+        .eq("user_id", user.id)
+        .select("id, user_id, content")
+        .single()
+    : supabase
+        .from("journal_entries")
+        .insert({
+          user_id: user.id,
+          program_day: day,
+          prompt_id: prompt.id,
+          content,
+          response_data,
+          mood,
+        })
+        .select("id, user_id, content")
+        .single();
+
+  const { data: entry, error } = await write;
+  if (error || !entry)
+    return {
+      status: "error",
+      error: "Your Day 5 entry could not be saved. Try again.",
     };
 
   after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));

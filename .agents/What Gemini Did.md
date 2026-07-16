@@ -1,4 +1,4 @@
-# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–4)
+# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–5)
 
 **Date:** July 15, 2026
 
@@ -59,6 +59,27 @@ I successfully implemented the structured "Day 2: Urgency" exercise which introd
 - Introduced `DayExperienceDispatcher` to cleanly switch between the single-input Day 1 experience and the dual-input Day 2 experience without cluttering the main Today screen.
 - Enhanced the `SevenDayPath` sidebar so the **actively viewed day** perfectly highlights in pink (`bg-orchid-mist`), while the inactive ones revert to standard styles, responding directly to user design feedback.
 
+
+## Phase 5: Day 5 Perspective Note Experience
+
+I successfully built Day 5 (the "Perspective Note" exercise), shifting from the analytical map structures of the earlier days to a more intimate "letter-card" composition.
+
+### 1. Database Schema & Migration (`supabase/phase_4_day_5.sql`)
+- Authored an additive SQL migration to validate Day 5's unique structure (`note_to_friend` and `line_to_keep`).
+- Enforced `note_to_friend` as a strictly required field while leaving `line_to_keep` entirely optional.
+- Backfilled legacy Day 5 generic text entries safely.
+- Updated the canonical `supabase_schema.sql` constraint rules.
+
+### 2. Backend Logic (`src/app/actions.ts`)
+- Extended the `StructuredResponseData` union with `Day5ResponseData`.
+- Authored the `saveDayFiveEntry` server action, incorporating the 96-hour unlock progression.
+- Ensured the `content` field for AI generation neatly formats the note without introducing messy artifacts if the optional line is omitted.
+
+### 3. Frontend Architecture (`src/components/day-5-composer.tsx`)
+- Designed a distinct letter-card UI. The main "What you would say" area uses a large warm porcelain editorial canvas with subtle horizontal ruling lines (like a notepad).
+- Built a bespoke CSS "folded paper corner" detail on the top right to anchor the letter metaphor without relying on explicit send/envelope semantics.
+- Positioned the optional "A line to keep" as a smaller Orchid Mist inset card slightly offset below the main note.
+- Integrated `Day5Composer` seamlessly into `DayExperienceDispatcher`.
 
 ## Phase 4, Part 4: Day 4 Recurrence Loop Experience
 
