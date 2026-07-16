@@ -228,6 +228,22 @@ export async function getDashboard(): Promise<DashboardData> {
   const currentDay = startedAt ? getProgramDay(startedAt) : null;
   const days = startedAt ? buildProgramDays(startedAt, entries) : [];
   const completed = startedAt ? isProgramComplete(startedAt, entries) : false;
+  const completionWindowOpen = startedAt ? isCompletionWindowOpen(startedAt) : true;
+
+  if (startedAt && !completionWindowOpen && !completed) {
+    after(async () => {
+      const admin = createAdminClient();
+      if (!admin) return;
+      const { count } = await admin
+        .from("product_events")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("event_name", "program_incomplete");
+      if (count === 0) {
+        await recordProductEvent(user.id, "program_incomplete");
+      }
+    });
+  }
 
   return {
     profile,
@@ -239,7 +255,7 @@ export async function getDashboard(): Promise<DashboardData> {
         ? getUnlockTime(startedAt, (currentDay + 1) as ProgramDay).toISOString()
         : null,
     completed,
-    completionWindowOpen: startedAt ? isCompletionWindowOpen(startedAt) : true,
+    completionWindowOpen,
     programReview: (reviewResult.data as ProgramReview) ?? null,
     sourceHash: hashJournalEntries(entries),
   };
@@ -296,34 +312,43 @@ export async function completeOnboarding(
   redirect("/");
 }
 
-export async function saveEntry(
-  _previous: EntryActionState,
-  formData: FormData,
-): Promise<EntryActionState> {
-  const user = await requireBetaUser();
-  const contentValue = formData.get("content");
-  const content = typeof contentValue === "string" ? contentValue.trim() : "";
-  const day = Number(formData.get("program_day"));
-  const prompt = getPrompt(day);
-  const mood = parseMood(formData.get("mood"));
 
-  if (!content)
+async function processAndSaveEntry({
+  day,
+  content,
+  mood,
+  response_data,
+  emptyErrorMessage,
+}: {
+  day: number;
+  content: string;
+  mood: number | null | undefined;
+  response_data?: StructuredResponseData;
+  emptyErrorMessage: string;
+}): Promise<EntryActionState> {
+  if (!content) {
     return {
       status: "error",
-      error: "Write something before saving your entry.",
+      error: emptyErrorMessage,
     };
-  if (content.length > 10_000)
+  }
+
+  const user = await requireBetaUser();
+  const prompt = getPrompt(day);
+
+  if (content.length > 10_000) {
     return {
       status: "error",
-      error: "Keep this entry under 10,000 characters.",
+      error: "Keep your entry under 10,000 characters.",
     };
-  if (!prompt)
-    return { status: "error", error: "Choose an available program day." };
-  if (mood === undefined)
+  }
+  if (!prompt) return { status: "error", error: "Prompt not found." };
+  if (mood === undefined) {
     return {
       status: "error",
       error: "Choose a mood from 1 to 5, or leave it blank.",
     };
+  }
 
   const supabase = await createClient();
   const { data: profile } = await supabase
@@ -354,7 +379,12 @@ export async function saveEntry(
   const write = existing
     ? supabase
         .from("journal_entries")
-        .update({ content, mood, prompt_id: prompt.id })
+        .update({
+          content,
+          response_data: response_data ?? null,
+          mood: mood ?? null,
+          prompt_id: prompt.id,
+        })
         .eq("id", existing.id)
         .eq("user_id", user.id)
         .select("id, user_id, content")
@@ -366,27 +396,31 @@ export async function saveEntry(
           program_day: day,
           prompt_id: prompt.id,
           content,
-          mood,
+          response_data: response_data ?? null,
+          mood: mood ?? null,
         })
         .select("id, user_id, content")
         .single();
 
   const { data: entry, error } = await write;
-  if (error || !entry)
+  if (error || !entry) {
     return {
       status: "error",
       error: "Your entry could not be saved. Try again.",
     };
+  }
 
   after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
-  if (!existing && day === 2)
+  if (!existing && day === 2) {
     after(() => recordProductEvent(user.id, "day_2_return"));
+  }
 
   const { data: completionEntries } = await supabase
     .from("journal_entries")
     .select("program_day, created_at")
     .eq("user_id", user.id)
     .not("program_day", "is", null);
+  
   if (
     !existing &&
     isProgramComplete(profile.program_started_at, completionEntries ?? [])
@@ -408,781 +442,179 @@ export async function saveEntry(
   revalidatePath("/journal");
   revalidatePath(`/entry/${entry.id}`);
   return { status: "success", entryId: entry.id, reflection };
+}
+
+export async function saveEntry(
+  _previous: EntryActionState,
+  formData: FormData,
+): Promise<EntryActionState> {
+  const contentValue = formData.get("content");
+  const content = typeof contentValue === "string" ? contentValue.trim() : "";
+  const day = Number(formData.get("program_day"));
+  const mood = parseMood(formData.get("mood"));
+
+  return processAndSaveEntry({
+    day,
+    content,
+    mood,
+    emptyErrorMessage: "Write something before saving your entry.",
+  });
 }
 
 export async function saveDayTwoEntry(
   _previous: EntryActionState,
   formData: FormData,
 ): Promise<EntryActionState> {
-  const user = await requireBetaUser();
   const urgentValue = formData.get("urgent");
   const urgent = typeof urgentValue === "string" ? urgentValue.trim() : "";
   const canWaitValue = formData.get("can_wait");
   const can_wait = typeof canWaitValue === "string" ? canWaitValue.trim() : "";
-  const day = 2;
-  const prompt = getPrompt(day);
   const mood = parseMood(formData.get("mood"));
-
-  if (!urgent && !can_wait) {
-    return {
-      status: "error",
-      error: "Write in at least one section before saving Day 2.",
-    };
-  }
 
   const combinedParts = [];
   if (urgent) combinedParts.push(`Feels urgent:\n${urgent}`);
   if (can_wait) combinedParts.push(`Can safely wait:\n${can_wait}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  if (content.length > 10_000) {
-    return {
-      status: "error",
-      error: "Keep your Day 2 entry under 10,000 characters.",
-    };
-  }
-  if (!prompt)
-    return { status: "error", error: "Day 2 prompt not found." };
-  if (mood === undefined)
-    return {
-      status: "error",
-      error: "Choose a mood from 1 to 5, or leave it blank.",
-    };
-
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at",
-    )
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile?.program_started_at || !profile.onboarding_completed_at) {
-    return {
-      status: "error",
-      error: "Start your seven-day program before writing an entry.",
-    };
-  }
-  if (day > getProgramDay(profile.program_started_at)) {
-    return { status: "error", error: "This day has not unlocked yet." };
-  }
-
-  const { data: existing } = await supabase
-    .from("journal_entries")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("program_day", day)
-    .maybeSingle();
-
   const response_data: Day2ResponseData = { version: 1, urgent, can_wait };
 
-  const write = existing
-    ? supabase
-        .from("journal_entries")
-        .update({ content, response_data, mood, prompt_id: prompt.id })
-        .eq("id", existing.id)
-        .eq("user_id", user.id)
-        .select("id, user_id, content")
-        .single()
-    : supabase
-        .from("journal_entries")
-        .insert({
-          user_id: user.id,
-          program_day: day,
-          prompt_id: prompt.id,
-          content,
-          response_data,
-          mood,
-        })
-        .select("id, user_id, content")
-        .single();
-
-  const { data: entry, error } = await write;
-  if (error || !entry)
-    return {
-      status: "error",
-      error: "Your Day 2 entry could not be saved. Try again.",
-    };
-
-  after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
-  if (!existing)
-    after(() => recordProductEvent(user.id, "day_2_return"));
-
-  const { data: completionEntries } = await supabase
-    .from("journal_entries")
-    .select("program_day, created_at")
-    .eq("user_id", user.id)
-    .not("program_day", "is", null);
-  if (
-    !existing &&
-    isProgramComplete(profile.program_started_at, completionEntries ?? [])
-  ) {
-    after(() => recordProductEvent(user.id, "program_completed"));
-  }
-
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  const reflection = hasGroqConsent
-    ? await generateReflection(entry)
-    : { status: "not_requested" as const, reflection: null, question: null };
-
-  revalidatePath("/");
-  revalidatePath("/journal");
-  revalidatePath(`/entry/${entry.id}`);
-  return { status: "success", entryId: entry.id, reflection };
+  return processAndSaveEntry({
+    day: 2,
+    content,
+    mood,
+    response_data,
+    emptyErrorMessage: "Write in at least one section before saving Day 2.",
+  });
 }
 
 export async function saveDayThreeEntry(
   _previous: EntryActionState,
   formData: FormData,
 ): Promise<EntryActionState> {
-  const user = await requireBetaUser();
-  const withinValue = formData.get("within_control");
-  const within = typeof withinValue === "string" ? withinValue.trim() : "";
-  const outsideValue = formData.get("outside_control");
-  const outside = typeof outsideValue === "string" ? outsideValue.trim() : "";
-  const day = 3;
-  const prompt = getPrompt(day);
+  const withinControlValue = formData.get("within_control");
+  const within_control = typeof withinControlValue === "string" ? withinControlValue.trim() : "";
+  const outsideControlValue = formData.get("outside_control");
+  const outside_control = typeof outsideControlValue === "string" ? outsideControlValue.trim() : "";
   const mood = parseMood(formData.get("mood"));
 
-  if (!within && !outside) {
-    return {
-      status: "error",
-      error: "Write in at least one section before saving Day 3.",
-    };
-  }
-
   const combinedParts = [];
-  if (within) combinedParts.push(`Within your control:\n${within}`);
-  if (outside) combinedParts.push(`Outside your control:\n${outside}`);
+  if (within_control) combinedParts.push(`Within my control:\n${within_control}`);
+  if (outside_control) combinedParts.push(`Outside my control:\n${outside_control}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  if (content.length > 10_000) {
-    return {
-      status: "error",
-      error: "Keep your Day 3 entry under 10,000 characters.",
-    };
-  }
-  if (!prompt)
-    return { status: "error", error: "Day 3 prompt not found." };
-  if (mood === undefined)
-    return {
-      status: "error",
-      error: "Choose a mood from 1 to 5, or leave it blank.",
-    };
+  const response_data: Day3ResponseData = { version: 1, within_control, outside_control };
 
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at",
-    )
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile?.program_started_at || !profile.onboarding_completed_at) {
-    return {
-      status: "error",
-      error: "Start your seven-day program before writing an entry.",
-    };
-  }
-  if (day > getProgramDay(profile.program_started_at)) {
-    return { status: "error", error: "This day has not unlocked yet." };
-  }
-
-  const { data: existing } = await supabase
-    .from("journal_entries")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("program_day", day)
-    .maybeSingle();
-
-  const response_data: Day3ResponseData = {
-    version: 1,
-    within_control: within,
-    outside_control: outside,
-  };
-
-  const write = existing
-    ? supabase
-        .from("journal_entries")
-        .update({ content, response_data, mood, prompt_id: prompt.id })
-        .eq("id", existing.id)
-        .eq("user_id", user.id)
-        .select("id, user_id, content")
-        .single()
-    : supabase
-        .from("journal_entries")
-        .insert({
-          user_id: user.id,
-          program_day: day,
-          prompt_id: prompt.id,
-          content,
-          response_data,
-          mood,
-        })
-        .select("id, user_id, content")
-        .single();
-
-  const { data: entry, error } = await write;
-  if (error || !entry)
-    return {
-      status: "error",
-      error: "Your Day 3 entry could not be saved. Try again.",
-    };
-
-  after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
-
-  const { data: completionEntries } = await supabase
-    .from("journal_entries")
-    .select("program_day, created_at")
-    .eq("user_id", user.id)
-    .not("program_day", "is", null);
-  if (
-    !existing &&
-    isProgramComplete(profile.program_started_at, completionEntries ?? [])
-  ) {
-    after(() => recordProductEvent(user.id, "program_completed"));
-  }
-
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  const reflection = hasGroqConsent
-    ? await generateReflection(entry)
-    : { status: "not_requested" as const, reflection: null, question: null };
-
-  revalidatePath("/");
-  revalidatePath("/journal");
-  revalidatePath(`/entry/${entry.id}`);
-  return { status: "success", entryId: entry.id, reflection };
+  return processAndSaveEntry({
+    day: 3,
+    content,
+    mood,
+    response_data,
+    emptyErrorMessage: "Write in at least one section before saving Day 3.",
+  });
 }
 
 export async function saveDayFourEntry(
   _previous: EntryActionState,
   formData: FormData,
 ): Promise<EntryActionState> {
-  const user = await requireBetaUser();
-  const thoughtValue = formData.get("recurring_thought");
-  const recurring_thought = typeof thoughtValue === "string" ? thoughtValue.trim() : "";
-  const momentValue = formData.get("usual_moment");
-  const usual_moment = typeof momentValue === "string" ? momentValue.trim() : "";
-  const day = 4;
-  const prompt = getPrompt(day);
+  const recurringThoughtValue = formData.get("recurring_thought");
+  const recurring_thought = typeof recurringThoughtValue === "string" ? recurringThoughtValue.trim() : "";
+  const usualMomentValue = formData.get("usual_moment");
+  const usual_moment = typeof usualMomentValue === "string" ? usualMomentValue.trim() : "";
   const mood = parseMood(formData.get("mood"));
 
-  if (!recurring_thought) {
-    return {
-      status: "error",
-      error: "Write the thought that keeps returning before saving Day 4.",
-    };
-  }
-
   const combinedParts = [];
-  combinedParts.push(`The thought that returns:\n${recurring_thought}`);
-  if (usual_moment) combinedParts.push(`When it tends to return:\n${usual_moment}`);
+  if (recurring_thought) combinedParts.push(`A thought that keeps returning:\n${recurring_thought}`);
+  if (usual_moment) combinedParts.push(`When it usually appears:\n${usual_moment}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  if (content.length > 10_000) {
-    return {
-      status: "error",
-      error: "Keep your Day 4 entry under 10,000 characters.",
-    };
-  }
-  if (!prompt)
-    return { status: "error", error: "Day 4 prompt not found." };
-  if (mood === undefined)
-    return {
-      status: "error",
-      error: "Choose a mood from 1 to 5, or leave it blank.",
-    };
+  const response_data: Day4ResponseData = { version: 1, recurring_thought, usual_moment };
 
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at",
-    )
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile?.program_started_at || !profile.onboarding_completed_at) {
-    return {
-      status: "error",
-      error: "Start your seven-day program before writing an entry.",
-    };
-  }
-  if (day > getProgramDay(profile.program_started_at)) {
-    return { status: "error", error: "This day has not unlocked yet." };
-  }
-
-  const { data: existing } = await supabase
-    .from("journal_entries")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("program_day", day)
-    .maybeSingle();
-
-  const response_data: Day4ResponseData = {
-    version: 1,
-    recurring_thought,
-    usual_moment,
-  };
-
-  const write = existing
-    ? supabase
-        .from("journal_entries")
-        .update({ content, response_data, mood, prompt_id: prompt.id })
-        .eq("id", existing.id)
-        .eq("user_id", user.id)
-        .select("id, user_id, content")
-        .single()
-    : supabase
-        .from("journal_entries")
-        .insert({
-          user_id: user.id,
-          program_day: day,
-          prompt_id: prompt.id,
-          content,
-          response_data,
-          mood,
-        })
-        .select("id, user_id, content")
-        .single();
-
-  const { data: entry, error } = await write;
-  if (error || !entry)
-    return {
-      status: "error",
-      error: "Your Day 4 entry could not be saved. Try again.",
-    };
-
-  after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
-
-  const { data: completionEntries } = await supabase
-    .from("journal_entries")
-    .select("program_day, created_at")
-    .eq("user_id", user.id)
-    .not("program_day", "is", null);
-  if (
-    !existing &&
-    isProgramComplete(profile.program_started_at, completionEntries ?? [])
-  ) {
-    after(() => recordProductEvent(user.id, "program_completed"));
-  }
-
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  const reflection = hasGroqConsent
-    ? await generateReflection(entry)
-    : { status: "not_requested" as const, reflection: null, question: null };
-
-  revalidatePath("/");
-  revalidatePath("/journal");
-  revalidatePath(`/entry/${entry.id}`);
-  return { status: "success", entryId: entry.id, reflection };
+  return processAndSaveEntry({
+    day: 4,
+    content,
+    mood,
+    response_data,
+    emptyErrorMessage: "Write in at least one section before saving Day 4.",
+  });
 }
 
 export async function saveDayFiveEntry(
   _previous: EntryActionState,
   formData: FormData,
 ): Promise<EntryActionState> {
-  const user = await requireBetaUser();
-  const noteValue = formData.get("note_to_friend");
-  const note_to_friend = typeof noteValue === "string" ? noteValue.trim() : "";
-  const lineValue = formData.get("line_to_keep");
-  const line_to_keep = typeof lineValue === "string" ? lineValue.trim() : "";
-  const day = 5;
-  const prompt = getPrompt(day);
+  const noteToFriendValue = formData.get("note_to_friend");
+  const note_to_friend = typeof noteToFriendValue === "string" ? noteToFriendValue.trim() : "";
+  const lineToKeepValue = formData.get("line_to_keep");
+  const line_to_keep = typeof lineToKeepValue === "string" ? lineToKeepValue.trim() : "";
   const mood = parseMood(formData.get("mood"));
 
-  if (!note_to_friend) {
-    return {
-      status: "error",
-      error: "Write what you would say before saving Day 5.",
-    };
-  }
-
   const combinedParts = [];
-  combinedParts.push(`What I would say:\n${note_to_friend}`);
-  if (line_to_keep) combinedParts.push(`A line to keep:\n${line_to_keep}`);
+  if (note_to_friend) combinedParts.push(`What I would tell a friend:\n${note_to_friend}`);
+  if (line_to_keep) combinedParts.push(`A line to keep for myself:\n${line_to_keep}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  if (content.length > 10_000) {
-    return {
-      status: "error",
-      error: "Keep your Day 5 entry under 10,000 characters.",
-    };
-  }
-  if (!prompt)
-    return { status: "error", error: "Day 5 prompt not found." };
-  if (mood === undefined)
-    return {
-      status: "error",
-      error: "Choose a mood from 1 to 5, or leave it blank.",
-    };
+  const response_data: Day5ResponseData = { version: 1, note_to_friend, line_to_keep };
 
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at",
-    )
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile?.program_started_at || !profile.onboarding_completed_at) {
-    return {
-      status: "error",
-      error: "Start your seven-day program before writing an entry.",
-    };
-  }
-  if (day > getProgramDay(profile.program_started_at)) {
-    return { status: "error", error: "This day has not unlocked yet." };
-  }
-
-  const { data: existing } = await supabase
-    .from("journal_entries")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("program_day", day)
-    .maybeSingle();
-
-  const response_data: Day5ResponseData = {
-    version: 1,
-    note_to_friend,
-    line_to_keep,
-  };
-
-  const write = existing
-    ? supabase
-        .from("journal_entries")
-        .update({ content, response_data, mood, prompt_id: prompt.id })
-        .eq("id", existing.id)
-        .eq("user_id", user.id)
-        .select("id, user_id, content")
-        .single()
-    : supabase
-        .from("journal_entries")
-        .insert({
-          user_id: user.id,
-          program_day: day,
-          prompt_id: prompt.id,
-          content,
-          response_data,
-          mood,
-        })
-        .select("id, user_id, content")
-        .single();
-
-  const { data: entry, error } = await write;
-  if (error || !entry)
-    return {
-      status: "error",
-      error: "Your Day 5 entry could not be saved. Try again.",
-    };
-
-  after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
-
-  const { data: completionEntries } = await supabase
-    .from("journal_entries")
-    .select("program_day, created_at")
-    .eq("user_id", user.id)
-    .not("program_day", "is", null);
-  if (
-    !existing &&
-    isProgramComplete(profile.program_started_at, completionEntries ?? [])
-  ) {
-    after(() => recordProductEvent(user.id, "program_completed"));
-  }
-
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  const reflection = hasGroqConsent
-    ? await generateReflection(entry)
-    : { status: "not_requested" as const, reflection: null, question: null };
-
-  revalidatePath("/");
-  revalidatePath("/journal");
-  revalidatePath(`/entry/${entry.id}`);
-  return { status: "success", entryId: entry.id, reflection };
+  return processAndSaveEntry({
+    day: 5,
+    content,
+    mood,
+    response_data,
+    emptyErrorMessage: "Write in at least one section before saving Day 5.",
+  });
 }
 
 export async function saveDaySixEntry(
   _previous: EntryActionState,
   formData: FormData,
 ): Promise<EntryActionState> {
-  const user = await requireBetaUser();
-  const actionValue = formData.get("small_action");
-  const small_action = typeof actionValue === "string" ? actionValue.trim() : "";
-  const momentValue = formData.get("first_moment");
-  const first_moment = typeof momentValue === "string" ? momentValue.trim() : "";
-  const day = 6;
-  const prompt = getPrompt(day);
+  const smallActionValue = formData.get("small_action");
+  const small_action = typeof smallActionValue === "string" ? smallActionValue.trim() : "";
+  const firstMomentValue = formData.get("first_moment");
+  const first_moment = typeof firstMomentValue === "string" ? firstMomentValue.trim() : "";
   const mood = parseMood(formData.get("mood"));
 
-  if (!small_action) {
-    return {
-      status: "error",
-      error: "Write one small action before saving Day 6.",
-    };
-  }
-
   const combinedParts = [];
-  combinedParts.push(`One small action:\n${small_action}`);
-  if (first_moment) combinedParts.push(`Make starting lighter:\n${first_moment}`);
+  if (small_action) combinedParts.push(`A small, clear action:\n${small_action}`);
+  if (first_moment) combinedParts.push(`The moment I can take it:\n${first_moment}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  if (content.length > 10_000) {
-    return {
-      status: "error",
-      error: "Keep your Day 6 entry under 10,000 characters.",
-    };
-  }
-  if (!prompt)
-    return { status: "error", error: "Day 6 prompt not found." };
-  if (mood === undefined)
-    return {
-      status: "error",
-      error: "Choose a mood from 1 to 5, or leave it blank.",
-    };
+  const response_data: Day6ResponseData = { version: 1, small_action, first_moment };
 
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at",
-    )
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile?.program_started_at || !profile.onboarding_completed_at) {
-    return {
-      status: "error",
-      error: "Start your seven-day program before writing an entry.",
-    };
-  }
-  if (day > getProgramDay(profile.program_started_at)) {
-    return { status: "error", error: "This day has not unlocked yet." };
-  }
-
-  const { data: existing } = await supabase
-    .from("journal_entries")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("program_day", day)
-    .maybeSingle();
-
-  const response_data: Day6ResponseData = {
-    version: 1,
-    small_action,
-    first_moment,
-  };
-
-  const write = existing
-    ? supabase
-        .from("journal_entries")
-        .update({ content, response_data, mood, prompt_id: prompt.id })
-        .eq("id", existing.id)
-        .eq("user_id", user.id)
-        .select("id, user_id, content")
-        .single()
-    : supabase
-        .from("journal_entries")
-        .insert({
-          user_id: user.id,
-          program_day: day,
-          prompt_id: prompt.id,
-          content,
-          response_data,
-          mood,
-        })
-        .select("id, user_id, content")
-        .single();
-
-  const { data: entry, error } = await write;
-  if (error || !entry)
-    return {
-      status: "error",
-      error: "Your Day 6 entry could not be saved. Try again.",
-    };
-
-  after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
-
-  const { data: completionEntries } = await supabase
-    .from("journal_entries")
-    .select("program_day, created_at")
-    .eq("user_id", user.id)
-    .not("program_day", "is", null);
-  if (
-    !existing &&
-    isProgramComplete(profile.program_started_at, completionEntries ?? [])
-  ) {
-    after(() => recordProductEvent(user.id, "program_completed"));
-  }
-
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  const reflection = hasGroqConsent
-    ? await generateReflection(entry)
-    : { status: "not_requested" as const, reflection: null, question: null };
-
-  revalidatePath("/");
-  revalidatePath("/journal");
-  revalidatePath(`/entry/${entry.id}`);
-  return { status: "success", entryId: entry.id, reflection };
+  return processAndSaveEntry({
+    day: 6,
+    content,
+    mood,
+    response_data,
+    emptyErrorMessage: "Write in at least one section before saving Day 6.",
+  });
 }
 
 export async function saveDaySevenEntry(
   _previous: EntryActionState,
   formData: FormData,
 ): Promise<EntryActionState> {
-  const user = await requireBetaUser();
-  const clearerValue = formData.get("became_clearer");
-  const became_clearer = typeof clearerValue === "string" ? clearerValue.trim() : "";
-  const carryValue = formData.get("carry_forward");
-  const carry_forward = typeof carryValue === "string" ? carryValue.trim() : "";
-  const day = 7;
-  const prompt = getPrompt(day);
+  const becameClearerValue = formData.get("became_clearer");
+  const became_clearer = typeof becameClearerValue === "string" ? becameClearerValue.trim() : "";
+  const carryForwardValue = formData.get("carry_forward");
+  const carry_forward = typeof carryForwardValue === "string" ? carryForwardValue.trim() : "";
   const mood = parseMood(formData.get("mood"));
 
-  if (!became_clearer) {
-    return {
-      status: "error",
-      error: "Write what became clearer before saving Day 7.",
-    };
-  }
-
   const combinedParts = [];
-  combinedParts.push(`Looking back, what became clearer:\n${became_clearer}`);
-  if (carry_forward) combinedParts.push(`What I want to carry forward:\n${carry_forward}`);
+  if (became_clearer) combinedParts.push(`What became clearer:\n${became_clearer}`);
+  if (carry_forward) combinedParts.push(`What I will carry forward:\n${carry_forward}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  if (content.length > 10_000) {
-    return {
-      status: "error",
-      error: "Keep your Day 7 entry under 10,000 characters.",
-    };
-  }
-  if (!prompt)
-    return { status: "error", error: "Day 7 prompt not found." };
-  if (mood === undefined)
-    return {
-      status: "error",
-      error: "Choose a mood from 1 to 5, or leave it blank.",
-    };
+  const response_data: Day7ResponseData = { version: 1, became_clearer, carry_forward };
 
-  const supabase = await createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      "program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at",
-    )
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile?.program_started_at || !profile.onboarding_completed_at) {
-    return {
-      status: "error",
-      error: "Start your seven-day program before writing an entry.",
-    };
-  }
-  if (day > getProgramDay(profile.program_started_at)) {
-    return { status: "error", error: "This day has not unlocked yet." };
-  }
-
-  const { data: existing } = await supabase
-    .from("journal_entries")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("program_day", day)
-    .maybeSingle();
-
-  const response_data: Day7ResponseData = {
-    version: 1,
-    became_clearer,
-    carry_forward,
-  };
-
-  const write = existing
-    ? supabase
-        .from("journal_entries")
-        .update({ content, response_data, mood, prompt_id: prompt.id })
-        .eq("id", existing.id)
-        .eq("user_id", user.id)
-        .select("id, user_id, content")
-        .single()
-    : supabase
-        .from("journal_entries")
-        .insert({
-          user_id: user.id,
-          program_day: day,
-          prompt_id: prompt.id,
-          content,
-          response_data,
-          mood,
-        })
-        .select("id, user_id, content")
-        .single();
-
-  const { data: entry, error } = await write;
-  if (error || !entry)
-    return {
-      status: "error",
-      error: "Your Day 7 entry could not be saved. Try again.",
-    };
-
-  after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
-
-  const { data: completionEntries } = await supabase
-    .from("journal_entries")
-    .select("program_day, created_at")
-    .eq("user_id", user.id)
-    .not("program_day", "is", null);
-  
-  const allEntriesWithCurrent = existing ? (completionEntries ?? []) : [...(completionEntries ?? []), { program_day: day, created_at: new Date().toISOString() }];
-  
-  if (
-    !existing &&
-    isProgramComplete(profile.program_started_at, allEntriesWithCurrent)
-  ) {
-    after(() => recordProductEvent(user.id, "program_completed"));
-  }
-
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  const reflection = hasGroqConsent
-    ? await generateReflection(entry)
-    : { status: "not_requested" as const, reflection: null, question: null };
-
-  revalidatePath("/");
-  revalidatePath("/journal");
-  revalidatePath(`/entry/${entry.id}`);
-  return { status: "success", entryId: entry.id, reflection };
+  return processAndSaveEntry({
+    day: 7,
+    content,
+    mood,
+    response_data,
+    emptyErrorMessage: "Write in at least one section before saving Day 7.",
+  });
 }
 
 export async function retryReflection(
@@ -1294,7 +726,9 @@ export async function updateAiConsent(
   };
 }
 
-export async function markReflectionViewed(entryId: string): Promise<void> {
+export async function recordReflectionViewedAction(
+  entryId: string,
+): Promise<void> {
   const user = await requireBetaUser();
   const supabase = await createClient();
 
