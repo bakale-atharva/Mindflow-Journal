@@ -98,8 +98,8 @@ These changes predate the canonical MVP. Review them against `mvp-specification.
 - No Groq API key is configured locally.
 - No Supabase service-role key is configured locally, so product-event and account-deletion operations cannot run yet.
 - Hosting target and production URL are not evidenced in the repository.
-- The Phase 2 program migration has not yet been applied to the connected Supabase project.
+- The Phase 2 and 3 program migrations have been applied and confirmed successful by owner.
 
 ## Next Best Action
 
-Confirm the Phase 2 migration and post-migration RLS test passed, then begin Phase 3 AI reflection configuration and safety-path verification.
+Proceed with Phase 4 Internal Beta Verification: create regression tests and perform live browser verification against the confirmed safe environment.

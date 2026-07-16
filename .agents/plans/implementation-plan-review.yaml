@@ -1,0 +1,242 @@
+metadata:
+  review_date: "2026-07-15T00:00:00+05:30"
+  reviewer: "Codex"
+  plan_version: "0.1.0"
+  reviewed_files:
+    - ".agents/plans/Phase 4.md"
+    - ".agents/plans/Design.md"
+    - "package.json"
+    - "src/lib/reflections.ts"
+    - "src/app/actions.ts"
+    - "src/lib/program.test.ts"
+    - "supabase/phase_3_groq.sql"
+    - "supabase/supabase_schema.sql"
+    - "PROJECT_LEDGER.md"
+    - "docs/task-ledger.md"
+
+overall_assessment:
+  status: rejected
+  readiness_score: 38
+  summary: "Phase 4 has a strong verification scope and clear completion gate, but it is a narrative checklist rather than an executable implementation plan. It supplies no milestone/task schema, estimates, dependencies, test fixtures, automation strategy, or evidence format. The only configured test command runs program unit tests, so the required Groq, RLS, deletion, event, accessibility, and browser-journey checks are not planned as repeatable work."
+  critical_issues_count: 4
+  warnings_count: 7
+
+validation_results:
+  milestones_validation:
+    - check: "Plan package discovered"
+      status: fail
+      details: "No milestones.yaml or milestone-m*.tasks.yaml exists. The reviewed file is Markdown and cannot be validated against the required plan schema."
+    - check: "Target audience and instruction detail"
+      status: warning
+      details: "The handoff is implicitly AI-oriented, but target_audience is not declared and AI-specific TDD, drift, and expected-output instructions are absent."
+    - check: "Scope boundaries"
+      status: pass
+      details: "The phase clearly confines work to owner-controlled accounts, existing Days 1-7, discovered defects, and excludes acquisition/payments."
+    - check: "Design authority"
+      status: pass
+      details: "The plan names .agents/plans/Design.md as the design authority."
+  tasks_validation:
+    - milestone_id: "phase-4"
+      checks:
+        - check: "Task IDs, types, estimates, dependencies, and file lists"
+          status: fail
+          details: "The eight sections are broad checklists, not atomic tasks. No task has an ID, duration, dependency, file boundary, deliverable, or acceptance test."
+        - check: "Automated coverage plan"
+          status: fail
+          details: "package.json maps pnpm test only to node --test src/lib/*.test.ts; the only discovered test file is src/lib/program.test.ts. No test harness or commands are planned for reflection failures, database/RLS, account deletion, events, or UI journeys."
+        - check: "Manual-test evidence and cleanup"
+          status: warning
+          details: "Disposable accounts and artificial journal text are required, but the plan does not identify account fixtures, time-control method, test-data cleanup, evidence capture, or where results will be recorded."
+        - check: "External verification ownership"
+          status: warning
+          details: "Zero Data Retention and live SQL confirmation are external-owner checks. Required evidence, responsible party, and a blocked outcome are not defined."
+
+best_practices_review:
+  task_sizing:
+    compliant_count: 0
+    total_count: 0
+    compliance_percentage: 0
+    violations:
+      - task_id: "phase-4-section-2"
+        estimated_minutes: 0
+        issue: "Reflection verification combines configuration, happy path, safety, four failure modes, retry/idempotency, edits, and privacy logging without a size estimate or decomposition."
+        recommendation: "Split into environment/preflight, mocked reflection unit tests, integration tests against a disposable account, and manual safety verification; estimate each at 30-150 minutes."
+      - task_id: "phase-4-section-5"
+        estimated_minutes: 0
+        issue: "RLS, direct-write permissions, event idempotency, cascading deletion, Auth deletion, allowlist deletion, and session revocation are bundled together."
+        recommendation: "Separate database authorization tests, deletion integration test, and post-deletion session check, with explicit fixture setup and cleanup."
+  style_anchors:
+    coverage_score: 20
+    tasks_with_anchors: 1
+    tasks_without_anchors: 7
+    missing_anchors:
+      - task_id: "phase-4-sections-2-to-5"
+        task_name: "Reflection, journal, privacy, and deletion verification"
+        reason: "The plan names Design.md globally but provides no exact code, test, SQL, or ledger anchors for the changes and tests that may be needed."
+      - task_id: "phase-4-section-6"
+        task_name: "Mobile and desktop user-journey verification"
+        reason: "The accessible behavior and exact safety notice are required but lack line-level anchors in Design.md or the implementation."
+  tdd_requirements:
+    test_first_compliance: 0
+    tdd_flag_set: false
+    violations:
+      - task_id: "phase-4-sections-2-to-5"
+        issue: "The plan permits defect fixes but does not require a failing regression test before each fix or identify exceptions for manual-only checks."
+        recommendation: "For each reproducible defect, add a failing test first, make the minimal change, run the named targeted test, then run the final suite."
+      - task_id: "phase-4-section-3"
+        issue: "'Extend the existing program tests' does not map scenarios to test cases or expected boundary timestamps."
+        recommendation: "List each missing program invariant, its fixture start time, attempted action, expected result, and test file."
+  drift_prevention:
+    affirmative_instructions: 75
+    ambiguous_tasks:
+      - task_id: "phase-4-all"
+        issue: "There is no stop/revert policy for an unexpected dependency, a migration requirement, a broad UI change, or a test that needs production-only access."
+        recommendation: "Require a stop note, revert of unrelated edits, and an incident entry before expanding beyond named files or adding a dependency."
+      - task_id: "phase-4-section-7"
+        issue: "The migration rule is strong, but it lacks the test and owner-approval checkpoint that decides whether an additive migration is warranted."
+        recommendation: "Make migration work a separate conditional task with exact target files, regression test, owner-run SQL evidence, and schema-sync acceptance criteria."
+
+requirements_alignment:
+  business_requirements_coverage:
+    - requirement_id: "MVP-AI"
+      requirement_name: "Optional Groq reflection with safe fallback"
+      covered_by_milestones: ["phase-4"]
+      coverage_status: partial
+      gap_description: "Happy, safety, no-consent, failure, and retry scenarios are named, but no repeatable test approach, fixtures, or evidence is defined."
+    - requirement_id: "MVP-Program"
+      requirement_name: "Seven-day unlock, missed-day, and ten-day completion behavior"
+      covered_by_milestones: ["phase-4"]
+      coverage_status: partial
+      gap_description: "Requirements are comprehensive, but controlled-time/database fixture setup and each expected assertion are missing."
+    - requirement_id: "MVP-Privacy"
+      requirement_name: "Private records, server-only writes, and permanent deletion"
+      covered_by_milestones: ["phase-4"]
+      coverage_status: partial
+      gap_description: "Two-user and deletion scenarios are named, but there is no direct-SQL/API test script, authentication fixture, or post-delete evidence protocol."
+  technical_requirements_coverage:
+    - requirement_id: "TR-Testing"
+      requirement_name: "Automated regression coverage plus browser verification"
+      covered_by_tasks: []
+      coverage_status: missing
+      gap_description: "No task files, test framework expansion, test commands, fixtures, or browser automation/manual evidence template are specified."
+    - requirement_id: "TR-Logging"
+      requirement_name: "No journal/reflection text in logs or product events"
+      covered_by_tasks: ["phase-4-section-2", "phase-4-section-5"]
+      coverage_status: partial
+      gap_description: "The plan names the rule but does not identify log sinks, test interception method, or event query to prove it."
+    - requirement_id: "TR-Migrations"
+      requirement_name: "Additive database migrations and synchronized complete schema"
+      covered_by_tasks: ["phase-4-section-7"]
+      coverage_status: partial
+      gap_description: "The conditional rule is present, but the decision gate, test plan, migration naming, and verification evidence are unspecified."
+
+issues:
+  critical:
+    - id: "CRIT-001"
+      category: "schema"
+      description: "Phase 4 is not represented by the required milestone/task plan structure."
+      location: ".agents/plans/Phase 4.md:1-196"
+      impact: "Task sequencing, scope, estimates, dependencies, and completion evidence cannot be validated or executed consistently."
+      remediation: "Create milestones.yaml and a Phase 4 task file with atomic IDs, owner/audience, estimates, dependencies, explicit files, acceptance criteria, validation commands, and task summaries."
+    - id: "CRIT-002"
+      category: "quality_gates"
+      description: "The final automated test command covers only program unit tests, not the required reflection, security, deletion, event, or UI behavior."
+      location: "package.json:10; .agents/plans/Phase 4.md:132-144"
+      impact: "The completion gate can pass while the majority of required behavior is untested."
+      remediation: "Define and implement targeted unit/integration/browser test commands, then make them explicit Phase 4 quality gates with expected results."
+    - id: "CRIT-003"
+      category: "instructions"
+      description: "The plan permits defect fixes without a test-first regression policy, exact file boundaries, or rollback handling."
+      location: ".agents/plans/Phase 4.md:29-86"
+      impact: "Verification can introduce regressions or broaden scope without a repeatable audit trail."
+      remediation: "For every reproducible defect require a failing test, minimal fix, targeted passing test, and final regression suite; state when to stop, revert, and log a deviation."
+    - id: "CRIT-004"
+      category: "requirements_alignment"
+      description: "Live database and external-service checks lack fixture, cleanup, evidence, and owner-confirmation protocols."
+      location: ".agents/plans/Phase 4.md:19-27, 48-108, 146-152"
+      impact: "Tests risk touching real data, cannot reliably reproduce time-dependent states, and cannot establish that owner-only external checks passed."
+      remediation: "Add an environment preflight task defining disposable-account naming, test-data lifecycle, controlled-time procedure, permitted project, SQL/query evidence, redacted screenshots/logs, and explicit owner sign-off for ZDR and migrations."
+  warnings:
+    - id: "WARN-001"
+      category: "task_sizing"
+      description: "Sections 2, 3, and 5 each contain several independent 30-150 minute deliverables but are not decomposed."
+      location: ".agents/plans/Phase 4.md:29-68, 88-108"
+      recommendation: "Split each section into preflight, automated tests, manual integration checks, and evidence/ledger updates."
+    - id: "WARN-002"
+      category: "style_anchors"
+      description: "Only the design authority is referenced; implementation, SQL, test, and ledger patterns lack concrete line-level anchors."
+      location: ".agents/plans/Phase 4.md:15"
+      recommendation: "Add 2-3 anchors per task, including src/lib/reflections.ts, src/app/actions.ts, src/lib/program.test.ts, relevant migration/schema lines, and ledger sections."
+    - id: "WARN-003"
+      category: "quality_gates"
+      description: "No expected output or failure handling is stated for final commands."
+      location: ".agents/plans/Phase 4.md:132-144"
+      recommendation: "State zero-exit/zero-warning expectations, preserve failure output in the result record, and prohibit completion when any command is skipped or fails."
+    - id: "WARN-004"
+      category: "instructions"
+      description: "The exact approved safety notice is required but has no approval source or literal expected text in the plan."
+      location: ".agents/plans/Phase 4.md:37, 129"
+      recommendation: "Anchor the assertion to IMMEDIATE_DANGER_NOTICE in src/lib/reflections.ts and state the accessibility assertion."
+    - id: "WARN-005"
+      category: "requirements_alignment"
+      description: "The plan requires no private text in logs/events but does not specify all inspected sinks or a negative-test method."
+      location: ".agents/plans/Phase 4.md:44, 96, 180"
+      recommendation: "Define application/server log capture, product_events queries, redaction expectations, and assertions using distinctive synthetic marker text."
+    - id: "WARN-006"
+      category: "dependencies"
+      description: "The phase says Phase 2 and Phase 3 SQL succeeded, while current project and task ledgers still record those milestones as pending/in progress."
+      location: ".agents/plans/Phase 4.md:11-13; PROJECT_LEDGER.md; docs/task-ledger.md"
+      recommendation: "Make ledger reconciliation the first task and record the owner-supplied migration evidence before using it as a Phase 4 precondition."
+    - id: "WARN-007"
+      category: "best_practices"
+      description: "Removal of the unused openai dependency lacks a verification step for lockfile and production build impact."
+      location: ".agents/plans/Phase 4.md:27"
+      recommendation: "Add a bounded maintenance task: prove no source import, update package.json and pnpm-lock.yaml, then run typecheck and build."
+  info:
+    - id: "INFO-001"
+      category: "dependencies"
+      description: "The verification order naturally supports parallel work after preflight: program unit tests, reflection mocks, and UI/manual preparation can proceed independently."
+      suggestion: "Sequence only live database and owner-confirmation tasks behind environment preflight; keep evidence consolidation last."
+    - id: "INFO-002"
+      category: "quality_gates"
+      description: "The plan correctly preserves entries before reflection generation and prohibits changing applied migration history."
+      suggestion: "Retain these as hard rules at both the start and end of each affected task."
+
+recommendations:
+  - priority: high
+    category: "schema"
+    recommendation: "Convert Phase 4 into an executable milestone/task plan before implementation. Use 30-150 minute tasks with IDs, explicit file scope, dependencies, acceptance criteria, and result-record locations."
+    affected_items: ["phase-4-all"]
+    effort: "60-90 minutes"
+  - priority: high
+    category: "quality_gates"
+    recommendation: "Define the testing matrix and commands: mocked Groq unit tests, server-action/database integration tests with disposable accounts, RLS/deletion SQL verification, and mobile/desktop browser evidence. Ensure pnpm test runs all automated tests."
+    affected_items: ["phase-4-sections-2-to-6"]
+    effort: "60-120 minutes"
+  - priority: high
+    category: "instructions"
+    recommendation: "Add AI-oriented TDD and drift policy to every conditional fix task, including stop/revert criteria and no test modification to make a defect pass."
+    affected_items: ["phase-4-sections-2-to-5", "phase-4-section-7"]
+    effort: "20-30 minutes"
+  - priority: medium
+    category: "requirements_alignment"
+    recommendation: "Add a test-environment runbook with a named non-production Supabase project, disposable-account lifecycle, controlled clock/data approach, redacted evidence, and cleanup checks."
+    affected_items: ["phase-4-sections-1-to-6"]
+    effort: "30-45 minutes"
+  - priority: medium
+    category: "quality_gates"
+    recommendation: "Define a ledger/test-result template that records scenario ID, date/timezone, fixture, result, evidence link, defect, fix, and re-run outcome."
+    affected_items: ["phase-4-section-8"]
+    effort: "20-30 minutes"
+
+approval:
+  ready_for_development: false
+  conditions:
+    - "Resolve CRIT-001 by supplying an executable milestone/task plan."
+    - "Resolve CRIT-002 by defining and wiring automated coverage for every applicable completion-gate behavior."
+    - "Resolve CRIT-003 by adding test-first, scope, stop/revert, and validation instructions to defect-fix work."
+    - "Resolve CRIT-004 with a safe live-test runbook and owner-evidence protocol."
+    - "Reconcile Phase 2/3 completion claims with PROJECT_LEDGER.md and docs/task-ledger.md."
+  next_steps:
+    - "Create the Phase 4 milestone/task package and revise this review after it exists."
+    - "Do not start live Groq or database verification until the preflight evidence and disposable test environment are defined."

@@ -112,7 +112,7 @@ export async function generateReflection(entry: ReflectionEntry, retry = false):
       messages: [
         {
           role: 'system',
-          content: 'You write brief reflections for a private journaling product. Reflect only what the writer explicitly expressed. Use calm, plain, non-clinical language. Do not diagnose, label, advise, infer hidden motives, mention policy, or claim certainty. The reflection must be 2–3 sentences and at most 80 words. The optional question must be open, gentle, grounded in the entry, and at most 20 words.'
+          content: 'You write brief reflections for a private journaling product. Reflect only what the writer explicitly expressed. Use calm, plain, non-clinical language. Do not diagnose, label, advise, infer hidden motives, mention policy, or claim certainty. The reflection must be 2–3 sentences and at most 80 words. The optional question must be open, gentle, grounded in the entry, and at most 20 words. Output strictly JSON with keys "reflection" and an optional "question".'
         },
         { role: 'user', content: entry.content }
       ],

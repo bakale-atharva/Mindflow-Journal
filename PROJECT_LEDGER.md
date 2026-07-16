@@ -106,9 +106,10 @@ These changes must be committed after the live migration and journey checks, or 
 
 ## Still To Do
 
-### Activate and verify Phase 2 — next dependency
+### Phase 4 Verification — next dependency
 
-- Run `supabase/phase_2_program_migration.sql` in the connected Supabase project.
+- Execute deterministic regression tests and manual browser QA.
+- Phase 2 and 3 SQL confirmed successful by owner.
 - Repeat the two-user isolation test with two clean test accounts.
 - Verify fresh-user onboarding, both consent paths, Day 1 save/edit/delete, future-day rejection, and returning-user routing.
 - Complete visual QA at mobile, tablet, laptop, and wide-desktop widths.
@@ -167,7 +168,7 @@ These changes must be committed after the live migration and journey checks, or 
 
 ## Next Best Action
 
-Confirm that `supabase/phase_2_program_migration.sql` and the post-migration two-user isolation test both passed. Then begin Phase 3 AI reflection configuration and safety-path verification.
+Proceed with Phase 4 Internal Beta Verification: create regression tests and perform live browser verification against the confirmed safe environment.
 
 ## Suggested Execution Plan
 

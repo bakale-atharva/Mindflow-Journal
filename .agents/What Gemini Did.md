@@ -26,6 +26,16 @@ I completed the implementation of Phase 3, successfully migrating the AI reflect
 ### 4. Canonical Documentation
 - Searched across all Markdown docs (`docs/` and `PROJECT_LEDGER.md`) and systematically replaced OpenAI terminologies with Groq, solidifying the new privacy-first strategy.
 
+## Phase 4: Verification & Internal Beta Setup
+
+I initiated Phase 4 to strictly verify the application logic and infrastructure before handoff.
+
+### Testing & Verification
+- **Test Infrastructure Setup**: Created a test runner `scratch/test-groq-matrix.js` to simulate the full state machine of the Groq integration directly against the live backend (hitting a dev-only API route to bypass Next.js middleware).
+- **Groq Reflection Defect Fix**: Discovered and fixed a defect where the Groq API would fail to return a JSON object (returning an empty `failed_generation`) because the system prompt lacked the explicit word "JSON". Added explicit JSON formatting requirements to `src/lib/reflections.ts`.
+- **Live Groq Verification (G-01 to G-11)**: Successfully executed the 11-step Groq matrix test suite, verifying consented saves, immediate danger triggers (correctly classifying intent to harm and returning `safety_redirect`), locking behavior (gracefully rejecting duplicate requests), and handling API errors/timeouts without data loss. 
+- Documented all results in `docs/verification/phase-4/groq-results.md`.
+
 
 ## Phase 1 & 2: Overview (Historical)
 I implemented the waitlist and user acquisition foundation as outlined in `User Acquisition.md` while strictly adhering to the visual constraints from `Design.md`.

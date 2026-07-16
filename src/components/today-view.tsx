@@ -17,30 +17,30 @@ export function TodayView({ dashboard, activeDay, activeEntry }: { dashboard: Da
           <ThoughtContour mood={5} className="absolute inset-y-0 right-0 hidden w-1/2 opacity-65 md:block" />
           <div className="relative z-10 max-w-xl"><p className="font-mono text-[11px] uppercase tracking-[.18em] text-primary">Seven-day journal complete</p><h1 className="mt-5 font-heading text-5xl font-semibold leading-[.98] tracking-[-.065em] text-ink sm:text-7xl">You made space for all seven days.</h1><p className="mt-6 text-base leading-8 text-ink/60">Your entries remain yours to revisit. MindFlow does not turn them into a score or a claim about you.</p><Link href="/journal" className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white">Read your journal<ArrowRight className="size-4" /></Link></div>
         </section>
-        <div className="surface mt-6 rounded-[28px] p-6"><SevenDayPath days={dashboard.days} compact /></div>
+        <div className="surface mt-6 rounded-2xl p-6"><SevenDayPath days={dashboard.days} compact /></div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-[1280px] px-4 py-5 sm:px-7 sm:py-8 lg:px-10">
+    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-7 sm:py-8 lg:px-10">
       <MobileBrand />
       <header className="mb-6 flex items-end justify-between gap-4">
-        <div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-ink/42">{format(new Date(), 'EEEE · MMMM d')}</p><h1 className="mt-2 font-heading text-3xl font-semibold tracking-[-.05em] text-ink sm:text-4xl">Day {activeDay.day} · {activeDay.theme}</h1></div>
+        <div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-ink/42">{format(new Date(), 'EEEE · MMMM d')}</p><h1 className="mt-2 font-heading text-3xl font-semibold tracking-tighter text-ink sm:text-4xl">Day {activeDay.day} · {activeDay.theme}</h1></div>
         {activeDay.day !== dashboard.currentDay ? <Link href="/" className="hidden rounded-xl bg-white px-4 py-2 text-sm font-semibold text-ink/55 sm:block">Back to today</Link> : null}
       </header>
 
       <div className="mb-6 rounded-[26px] border border-ink/8 bg-white/65 p-4 lg:hidden"><SevenDayPath days={dashboard.days} compact /></div>
 
       {dashboard.nextUnlockAt ? (
-        <section className="mb-6 flex items-center gap-3 rounded-[22px] bg-ink px-4 py-3.5 text-white lg:hidden">
+        <section className="mb-6 flex items-center gap-3 rounded-xl bg-ink px-4 py-3.5 text-white lg:hidden">
           <Clock3 className="size-4 shrink-0 text-seafoam" />
           <p className="text-sm text-white/78"><span className="font-semibold text-white">Next prompt:</span> {format(new Date(dashboard.nextUnlockAt), 'EEE, MMM d · h:mm a')}</p>
         </section>
       ) : null}
 
       {!dashboard.completionWindowOpen ? (
-        <section className="mb-6 flex items-start gap-3 rounded-[22px] border border-coral/25 bg-coral/10 p-4 text-sm leading-6 text-ink/62">
+        <section className="mb-6 flex items-start gap-3 rounded-xl border border-coral/25 bg-coral/10 p-4 text-sm leading-6 text-ink/62">
           <Hourglass className="mt-0.5 size-4 shrink-0 text-destructive" />
           <p>The ten-day completion window has ended. Your journal remains available to read, write, and edit, but new entries will not mark the beta complete.</p>
         </section>
@@ -52,7 +52,7 @@ export function TodayView({ dashboard, activeDay, activeEntry }: { dashboard: Da
             <ThoughtContour mood={activeEntry?.mood} />
             <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-6 sm:p-9">
               <div className="flex items-center justify-between"><span className="rounded-full border border-white/55 bg-white/48 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[.15em] text-ink/55 backdrop-blur">{activeDay.day === dashboard.currentDay ? 'Today’s prompt' : `Day ${activeDay.day} prompt`}</span><span className="font-mono text-xs text-ink/45">{String(activeDay.day).padStart(2, '0')} / 07</span></div>
-              <h2 className="max-w-2xl font-heading text-3xl font-semibold leading-[1.06] tracking-[-.05em] text-ink sm:text-5xl">{activeDay.prompt}</h2>
+              <h2 className="max-w-2xl font-heading text-3xl font-semibold leading-[1.06] tracking-tighter text-ink sm:text-5xl">{activeDay.prompt}</h2>
             </div>
           </section>
           <EntryComposer key={`${activeDay.day}-${activeEntry?.updated_at ?? 'new'}`} day={activeDay} entry={activeEntry} />
