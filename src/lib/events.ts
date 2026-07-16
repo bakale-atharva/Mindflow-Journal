@@ -9,6 +9,7 @@ export type ProductEventName =
   | 'reflection_viewed'
   | 'day_2_return'
   | 'program_completed'
+  | 'program_review_created'
 
 export async function recordProductEvent(
   userId: string,

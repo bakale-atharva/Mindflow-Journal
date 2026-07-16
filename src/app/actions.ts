@@ -18,6 +18,7 @@ import {
   type ProgramDayView,
 } from "@/lib/program";
 import { generateReflection, type ReflectionResult } from "@/lib/reflections";
+import { hashJournalEntries } from "@/lib/program-review";
 import { createClient } from "@/lib/server";
 
 export type ReflectionStatus =
@@ -31,6 +32,28 @@ export type AIReflection = {
   reflection: string | null;
   question: string | null;
   status: ReflectionStatus;
+  attempt_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProgramReviewStatus =
+  | "pending"
+  | "complete"
+  | "failed"
+  | "safety_redirect";
+
+export type ProgramReview = {
+  id: string;
+  user_id: string;
+  source_hash: string;
+  status: ProgramReviewStatus;
+  provider: string | null;
+  model: string | null;
+  safety_flags: unknown | null;
+  reflection: string | null;
+  practice: string | null;
+  practice_kept_at: string | null;
   attempt_count: number;
   created_at: string;
   updated_at: string;
@@ -113,6 +136,8 @@ export type DashboardData = {
   nextUnlockAt: string | null;
   completed: boolean;
   completionWindowOpen: boolean;
+  programReview: ProgramReview | null;
+  sourceHash: string;
 };
 
 export type EntryActionState =
@@ -154,7 +179,7 @@ export async function getDashboard(): Promise<DashboardData> {
   if (profileError || !profile)
     throw new Error("Your MindFlow profile could not be loaded.");
 
-  const [entriesResult, reflectionsResult] = await Promise.all([
+  const [entriesResult, reflectionsResult, reviewResult] = await Promise.all([
     supabase
       .from("journal_entries")
       .select(
@@ -169,12 +194,21 @@ export async function getDashboard(): Promise<DashboardData> {
         "entry_id, reflection, question, status, attempt_count, created_at, updated_at",
       )
       .eq("user_id", user.id),
+    supabase
+      .from("ai_program_reviews")
+      .select(
+        "id, user_id, source_hash, status, provider, model, safety_flags, reflection, practice, practice_kept_at, attempt_count, created_at, updated_at",
+      )
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
 
   if (entriesResult.error)
     throw new Error("Your journal entries could not be loaded.");
   if (reflectionsResult.error)
     throw new Error("Your reflections could not be loaded.");
+  if (reviewResult.error)
+    throw new Error("Your program review could not be loaded.");
 
   const reflectionByEntry = new Map(
     (reflectionsResult.data ?? []).map((reflection) => [
@@ -206,6 +240,8 @@ export async function getDashboard(): Promise<DashboardData> {
         : null,
     completed,
     completionWindowOpen: startedAt ? isCompletionWindowOpen(startedAt) : true,
+    programReview: (reviewResult.data as ProgramReview) ?? null,
+    sourceHash: hashJournalEntries(entries),
   };
 }
 
@@ -1294,6 +1330,126 @@ export async function markReflectionViewed(entryId: string): Promise<void> {
       ),
     );
   }
+}
+
+export async function generateProgramReview(
+  _previous: BasicActionState,
+  _formData: FormData,
+): Promise<BasicActionState> {
+  const user = await requireBetaUser();
+  const supabase = await createClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("program_started_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!profile?.program_started_at) return { status: "error", error: "Program not started." };
+  
+  const hasGroqConsent =
+    profile.ai_processing_consent_at !== null &&
+    profile.ai_processing_consent_revoked_at === null &&
+    profile.ai_processing_provider === "groq" &&
+    profile.ai_consent_version === 2;
+
+  if (!hasGroqConsent) return { status: "error", error: "Consent required for reflection." };
+
+  const { data: entries } = await supabase
+    .from("journal_entries")
+    .select("id, user_id, program_day, prompt_id, content, response_data, mood, created_at, updated_at")
+    .eq("user_id", user.id)
+    .not("program_day", "is", null);
+
+  if (!isProgramComplete(profile.program_started_at, entries ?? [])) {
+    return { status: "error", error: "Program not completed yet." };
+  }
+
+  const { generateProgramReviewHelper, hashJournalEntries } = await import('@/lib/program-review');
+  
+  const sourceHash = hashJournalEntries((entries ?? []) as JournalEntry[]);
+  
+  const result = await generateProgramReviewHelper(user.id, (entries ?? []) as JournalEntry[], sourceHash, false);
+
+  if (result.status === 'safety_redirect' || result.status === 'failed') {
+    return { status: "error", error: "Review generation failed." };
+  }
+
+  after(() => recordProductEvent(user.id, "program_review_created"));
+  
+  revalidatePath("/");
+  revalidatePath("/journal");
+  return { status: "success", message: "Review generated" };
+}
+
+export async function retryProgramReview(
+  _previous: BasicActionState,
+  _formData: FormData,
+): Promise<BasicActionState> {
+  const user = await requireBetaUser();
+  const supabase = await createClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("program_started_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!profile?.program_started_at) return { status: "error", error: "Program not started." };
+  
+  const hasGroqConsent =
+    profile.ai_processing_consent_at !== null &&
+    profile.ai_processing_consent_revoked_at === null &&
+    profile.ai_processing_provider === "groq" &&
+    profile.ai_consent_version === 2;
+
+  if (!hasGroqConsent) return { status: "error", error: "Consent required for reflection." };
+
+  const { data: entries } = await supabase
+    .from("journal_entries")
+    .select("id, user_id, program_day, prompt_id, content, response_data, mood, created_at, updated_at")
+    .eq("user_id", user.id)
+    .not("program_day", "is", null);
+
+  if (!isProgramComplete(profile.program_started_at, entries ?? [])) {
+    return { status: "error", error: "Program not completed yet." };
+  }
+
+  const { generateProgramReviewHelper, hashJournalEntries } = await import('@/lib/program-review');
+  
+  const sourceHash = hashJournalEntries((entries ?? []) as JournalEntry[]);
+  
+  const result = await generateProgramReviewHelper(user.id, (entries ?? []) as JournalEntry[], sourceHash, true);
+
+  if (result.status === 'safety_redirect' || result.status === 'failed' || result.status === 'retry_exhausted') {
+    return { status: "error", error: "Review regeneration failed." };
+  }
+
+  after(() => recordProductEvent(user.id, "program_review_created"));
+
+  revalidatePath("/");
+  revalidatePath("/journal");
+  return { status: "success", message: "Review generated" };
+}
+
+export async function keepProgramPractice(
+  _previous: BasicActionState,
+  _formData: FormData,
+): Promise<BasicActionState> {
+  const user = await requireBetaUser();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("ai_program_reviews")
+    .update({ practice_kept_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .is("practice_kept_at", null);
+
+  if (error) return { status: "error", error: "Could not keep practice." };
+
+  revalidatePath("/");
+  revalidatePath("/journal");
+  return { status: "success", message: "Practice kept." };
 }
 
 export async function deleteAccount(

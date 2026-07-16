@@ -1,4 +1,4 @@
-# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–7)
+# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–7) & Analytics
 
 **Date:** July 15, 2026
 
@@ -59,6 +59,27 @@ I successfully implemented the structured "Day 2: Urgency" exercise which introd
 - Introduced `DayExperienceDispatcher` to cleanly switch between the single-input Day 1 experience and the dual-input Day 2 experience without cluttering the main Today screen.
 - Enhanced the `SevenDayPath` sidebar so the **actively viewed day** perfectly highlights in pink (`bg-orchid-mist`), while the inactive ones revert to standard styles, responding directly to user design feedback.
 
+## Phase 8: Analytics (Seven-Day Completion Reflection)
+
+I successfully implemented the Seven-Day Completion Reflection plan, ensuring the completion flow remains calm and private, with no intrusive numerical scores or dashboards.
+
+### 1. Database Schema & Migration (`supabase/phase_5_analytics.sql`)
+- Authored an additive SQL migration that builds the `ai_program_reviews` table.
+- Added strict Row-Level Security (RLS) policies allowing users to read only their own reviews while generation workflows operate safely from the service role.
+- Updated `supabase_schema.sql` to integrate these final programmatic additions into the canonical schema.
+
+### 2. Backend Logic (`src/app/actions.ts` & `src/lib/program-review.ts`)
+- Added `ProgramReviewStatus` and `ProgramReview` types.
+- Extended the `DashboardData` payload in `getDashboard` to include the user's review and a deterministic source hash.
+- Built a deterministic `hashJournalEntries` helper in `src/lib/program-review.ts` that safely digests the sorted seven-day content text for detecting future journal edits (stale reviews).
+- Created robust explicit generation pathways (`generateProgramReview`, `retryProgramReview`) relying on Groq generation and integrating the existing immediate-danger safety screens.
+- Included a `keepProgramPractice` action allowing users to explicitly note when they intend to carry forward a generated gentle practice.
+
+### 3. Frontend Components (`src/components/program-review-panel.tsx`)
+- Designed and injected the `ProgramReviewPanel` to silently append below the final completed journal presentation in `TodayView`.
+- Developed precise, state-driven UI blocks for users without AI consent, guiding them to enable reflections transparently if they wish.
+- Surfaced clear visual indicators (via CSS pulsing and intuitive status text) when the long-running review generation is pending.
+- Included a specialized stale-review notice which prompts the user to refresh their synthesis if they navigate back and edit a past entry.
 
 ## Phase 7: Day 7 Closing Review Experience
 

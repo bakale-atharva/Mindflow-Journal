@@ -6,6 +6,7 @@ import type { ProgramDayView } from '@/lib/program'
 import { DayExperienceDispatcher } from '@/components/day-experience-dispatcher'
 import { SevenDayPath } from '@/components/seven-day-path'
 import { ThoughtContour } from '@/components/thought-contour'
+import { ProgramReviewPanel } from '@/components/program-review-panel'
 
 export function TodayView({ dashboard, activeDay, activeEntry }: { dashboard: DashboardData; activeDay: ProgramDayView; activeEntry: JournalEntry | null }) {
   const recent = dashboard.entries.slice(-3).reverse()
@@ -18,6 +19,7 @@ export function TodayView({ dashboard, activeDay, activeEntry }: { dashboard: Da
           <div className="relative z-10 max-w-xl"><p className="font-mono text-[11px] uppercase tracking-[.18em] text-primary">Seven-day journal complete</p><h1 className="mt-5 font-heading text-5xl font-semibold leading-[.98] tracking-[-.065em] text-ink sm:text-7xl">You made space for all seven days.</h1><p className="mt-6 text-base leading-8 text-ink/60">Your entries remain yours to revisit. MindFlow does not turn them into a score or a claim about you.</p><Link href="/journal" className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white">Read your journal<ArrowRight className="size-4" /></Link></div>
         </section>
         <div className="surface mt-6 rounded-2xl p-6"><SevenDayPath days={dashboard.days} compact activeDay={activeDay.day} /></div>
+        <ProgramReviewPanel dashboard={dashboard} currentHash={dashboard.sourceHash} />
       </div>
     )
   }

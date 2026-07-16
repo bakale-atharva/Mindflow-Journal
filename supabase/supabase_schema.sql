@@ -387,20 +387,42 @@ create index if not exists journal_entries_user_created_at_idx
 -- -----------------------------------------------------------------------------
 
 create table if not exists public.ai_reflections (
-  entry_id uuid primary key references public.journal_entries(id) on delete cascade,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(user_id) on delete cascade,
+  entry_id uuid not null references public.journal_entries(id) on delete cascade,
+  status text not null,
+  provider text,
+  model text,
+  safety_flags jsonb,
   reflection text,
   question text,
-  status text not null default 'pending'
-    check (status in ('pending', 'complete', 'failed', 'safety_redirect')),
-  model text,
-  attempt_count smallint not null default 0 check (attempt_count between 0 and 2),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  attempt_count smallint not null default 0,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now(),
+  constraint ai_reflections_status_check check (status in ('pending', 'complete', 'failed', 'safety_redirect'))
 );
 
-create index if not exists ai_reflections_user_id_idx
-  on public.ai_reflections (user_id);
+create unique index if not exists ai_reflections_entry_id_idx on public.ai_reflections(entry_id);
+
+create table if not exists public.ai_program_reviews (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(user_id) on delete cascade,
+  source_hash text not null,
+  status text not null,
+  provider text,
+  model text,
+  safety_flags jsonb,
+  reflection text,
+  practice text,
+  practice_kept_at timestamp with time zone,
+  attempt_count smallint not null default 0,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now(),
+  constraint ai_program_reviews_status_check check (status in ('pending', 'complete', 'failed', 'safety_redirect'))
+);
+
+create unique index if not exists ai_program_reviews_user_id_idx on public.ai_program_reviews(user_id);
+
 
 create table if not exists public.product_events (
   id uuid primary key default gen_random_uuid(),
@@ -443,6 +465,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists ai_reflections_set_updated_at on public.ai_reflections;
 create trigger ai_reflections_set_updated_at
 before update on public.ai_reflections
+for each row execute function public.set_updated_at();
+
+drop trigger if exists ai_program_reviews_set_updated_at on public.ai_program_reviews;
+create trigger ai_program_reviews_set_updated_at
+before update on public.ai_program_reviews
 for each row execute function public.set_updated_at();
 
 create or replace function public.protect_program_start()
@@ -660,6 +687,12 @@ using ((select auth.uid()) = user_id and public.has_active_beta_access());
 
 create policy "ai_reflections_select_own"
 on public.ai_reflections for select to authenticated
+using ((select auth.uid()) = user_id and public.has_active_beta_access());
+
+alter table public.ai_program_reviews enable row level security;
+
+create policy "ai_program_reviews_select_own"
+on public.ai_program_reviews for select to authenticated
 using ((select auth.uid()) = user_id and public.has_active_beta_access());
 
 -- Reflection writes and product-event writes remain server-only in later phases.
