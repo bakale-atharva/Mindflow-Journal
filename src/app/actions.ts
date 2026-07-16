@@ -66,12 +66,19 @@ export type Day6ResponseData = {
   first_moment: string;
 };
 
+export type Day7ResponseData = {
+  version: 1;
+  became_clearer: string;
+  carry_forward: string;
+};
+
 export type StructuredResponseData =
   | Day2ResponseData
   | Day3ResponseData
   | Day4ResponseData
   | Day5ResponseData
   | Day6ResponseData
+  | Day7ResponseData
   | null;
 
 export type JournalEntry = {
@@ -990,6 +997,138 @@ export async function saveDaySixEntry(
   if (
     !existing &&
     isProgramComplete(profile.program_started_at, completionEntries ?? [])
+  ) {
+    after(() => recordProductEvent(user.id, "program_completed"));
+  }
+
+  const hasGroqConsent =
+    profile.ai_processing_consent_at !== null &&
+    profile.ai_processing_consent_revoked_at === null &&
+    profile.ai_processing_provider === "groq" &&
+    profile.ai_consent_version === 2;
+
+  const reflection = hasGroqConsent
+    ? await generateReflection(entry)
+    : { status: "not_requested" as const, reflection: null, question: null };
+
+  revalidatePath("/");
+  revalidatePath("/journal");
+  revalidatePath(`/entry/${entry.id}`);
+  return { status: "success", entryId: entry.id, reflection };
+}
+
+export async function saveDaySevenEntry(
+  _previous: EntryActionState,
+  formData: FormData,
+): Promise<EntryActionState> {
+  const user = await requireBetaUser();
+  const clearerValue = formData.get("became_clearer");
+  const became_clearer = typeof clearerValue === "string" ? clearerValue.trim() : "";
+  const carryValue = formData.get("carry_forward");
+  const carry_forward = typeof carryValue === "string" ? carryValue.trim() : "";
+  const day = 7;
+  const prompt = getPrompt(day);
+  const mood = parseMood(formData.get("mood"));
+
+  if (!became_clearer) {
+    return {
+      status: "error",
+      error: "Write what became clearer before saving Day 7.",
+    };
+  }
+
+  const combinedParts = [];
+  combinedParts.push(`Looking back, what became clearer:\n${became_clearer}`);
+  if (carry_forward) combinedParts.push(`What I want to carry forward:\n${carry_forward}`);
+  const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
+
+  if (content.length > 10_000) {
+    return {
+      status: "error",
+      error: "Keep your Day 7 entry under 10,000 characters.",
+    };
+  }
+  if (!prompt)
+    return { status: "error", error: "Day 7 prompt not found." };
+  if (mood === undefined)
+    return {
+      status: "error",
+      error: "Choose a mood from 1 to 5, or leave it blank.",
+    };
+
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select(
+      "program_started_at, onboarding_completed_at, ai_processing_consent_at, ai_processing_provider, ai_consent_version, ai_processing_consent_revoked_at",
+    )
+    .eq("user_id", user.id)
+    .single();
+
+  if (!profile?.program_started_at || !profile.onboarding_completed_at) {
+    return {
+      status: "error",
+      error: "Start your seven-day program before writing an entry.",
+    };
+  }
+  if (day > getProgramDay(profile.program_started_at)) {
+    return { status: "error", error: "This day has not unlocked yet." };
+  }
+
+  const { data: existing } = await supabase
+    .from("journal_entries")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("program_day", day)
+    .maybeSingle();
+
+  const response_data: Day7ResponseData = {
+    version: 1,
+    became_clearer,
+    carry_forward,
+  };
+
+  const write = existing
+    ? supabase
+        .from("journal_entries")
+        .update({ content, response_data, mood, prompt_id: prompt.id })
+        .eq("id", existing.id)
+        .eq("user_id", user.id)
+        .select("id, user_id, content")
+        .single()
+    : supabase
+        .from("journal_entries")
+        .insert({
+          user_id: user.id,
+          program_day: day,
+          prompt_id: prompt.id,
+          content,
+          response_data,
+          mood,
+        })
+        .select("id, user_id, content")
+        .single();
+
+  const { data: entry, error } = await write;
+  if (error || !entry)
+    return {
+      status: "error",
+      error: "Your Day 7 entry could not be saved. Try again.",
+    };
+
+  after(() => recordProductEvent(user.id, "entry_saved", { program_day: day }));
+
+  const { data: completionEntries } = await supabase
+    .from("journal_entries")
+    .select("program_day, created_at")
+    .eq("user_id", user.id)
+    .not("program_day", "is", null);
+  
+  const allEntriesWithCurrent = existing ? (completionEntries ?? []) : [...(completionEntries ?? []), { program_day: day, created_at: new Date().toISOString() }];
+  
+  if (
+    !existing &&
+    isProgramComplete(profile.program_started_at, allEntriesWithCurrent)
   ) {
     after(() => recordProductEvent(user.id, "program_completed"));
   }

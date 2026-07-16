@@ -6,6 +6,7 @@ import { Day3Composer } from '@/components/day-3-composer'
 import { Day4Composer } from '@/components/day-4-composer'
 import { Day5Composer } from '@/components/day-5-composer'
 import { Day6Composer } from '@/components/day-6-composer'
+import { Day7Composer } from '@/components/day-7-composer'
 
 export function DayExperienceDispatcher({ day, entry }: { day: ProgramDayView; entry: JournalEntry | null }) {
   if (day.day === 2) {
@@ -22,6 +23,9 @@ export function DayExperienceDispatcher({ day, entry }: { day: ProgramDayView; e
   }
   if (day.day === 6) {
     return <Day6Composer day={day} entry={entry} />
+  }
+  if (day.day === 7) {
+    return <Day7Composer day={day} entry={entry} />
   }
   return <Day1Composer day={day} entry={entry} />
 }
