@@ -1,4 +1,4 @@
-# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–3)
+# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–4)
 
 **Date:** July 15, 2026
 
@@ -59,6 +59,26 @@ I successfully implemented the structured "Day 2: Urgency" exercise which introd
 - Introduced `DayExperienceDispatcher` to cleanly switch between the single-input Day 1 experience and the dual-input Day 2 experience without cluttering the main Today screen.
 - Enhanced the `SevenDayPath` sidebar so the **actively viewed day** perfectly highlights in pink (`bg-orchid-mist`), while the inactive ones revert to standard styles, responding directly to user design feedback.
 
+
+## Phase 4, Part 4: Day 4 Recurrence Loop Experience
+
+I successfully built Day 4 (the "Recurrence Loop" exercise), introducing a vertical interface distinct from the side-by-side view used in Day 3.
+
+### 1. Database Schema & Migration (`supabase/phase_4_day_4.sql`)
+- Authored an additive SQL migration to validate Day 4's structure (`recurring_thought` and `usual_moment`).
+- Enforced `recurring_thought` as a required field while leaving `usual_moment` strictly optional.
+- Backfilled legacy Day 4 generic text entries into the new structured JSON `recurring_thought` field.
+- Updated the canonical `supabase_schema.sql` constraint rules.
+
+### 2. Backend Logic (`src/app/actions.ts`)
+- Extended the `StructuredResponseData` union with `Day4ResponseData`.
+- Authored the `saveDayFourEntry` server action, incorporating the 72-hour unlock progression.
+- Ensured the `content` field for AI generation only includes `usual_moment` text if it was actually provided, preventing messy formatting on empty optional inputs.
+
+### 3. Frontend Architecture (`src/components/day-4-composer.tsx`)
+- Designed a stacked, vertical loop composer UI. The top card uses a warm porcelain style with Lilac accents for the required "recurring thought", while the optional "usual moment" context card sits below on Orchid Mist.
+- Connected the two components with a subtle vertical thread to visualize the recurrence loop.
+- Integrated `Day4Composer` seamlessly into `DayExperienceDispatcher` to continue the progressive unlocked journey.
 
 ## Phase 4, Part 3: Day 3 Control Boundary Experience
 
