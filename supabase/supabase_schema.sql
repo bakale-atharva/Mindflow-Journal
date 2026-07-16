@@ -58,13 +58,27 @@ create table if not exists public.journal_entries (
     check (response_data is null or jsonb_typeof(response_data) = 'object'),
   constraint journal_entries_day_2_shape
     check (
-      program_day <> 2 or response_data is null or (
+      program_day <> 2 or (
+        response_data is not null and
         (response_data->>'version') = '1' and
         jsonb_typeof(response_data->'urgent') = 'string' and
         jsonb_typeof(response_data->'can_wait') = 'string' and
         (
           char_length(btrim(response_data->>'urgent')) > 0 or
           char_length(btrim(response_data->>'can_wait')) > 0
+        )
+      )
+    ),
+  constraint journal_entries_day_3_shape
+    check (
+      program_day <> 3 or (
+        response_data is not null and
+        (response_data->>'version') = '1' and
+        jsonb_typeof(response_data->'within_control') = 'string' and
+        jsonb_typeof(response_data->'outside_control') = 'string' and
+        (
+          char_length(btrim(response_data->>'within_control')) > 0 or
+          char_length(btrim(response_data->>'outside_control')) > 0
         )
       )
     )
@@ -194,13 +208,35 @@ begin
     alter table public.journal_entries
       add constraint journal_entries_day_2_shape
       check (
-        program_day <> 2 or response_data is null or (
+        program_day <> 2 or (
+          response_data is not null and
           (response_data->>'version') = '1' and
           jsonb_typeof(response_data->'urgent') = 'string' and
           jsonb_typeof(response_data->'can_wait') = 'string' and
           (
             char_length(btrim(response_data->>'urgent')) > 0 or
             char_length(btrim(response_data->>'can_wait')) > 0
+          )
+        )
+      ) not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.journal_entries'::regclass
+      and conname = 'journal_entries_day_3_shape'
+  ) then
+    alter table public.journal_entries
+      add constraint journal_entries_day_3_shape
+      check (
+        program_day <> 3 or (
+          response_data is not null and
+          (response_data->>'version') = '1' and
+          jsonb_typeof(response_data->'within_control') = 'string' and
+          jsonb_typeof(response_data->'outside_control') = 'string' and
+          (
+            char_length(btrim(response_data->>'within_control')) > 0 or
+            char_length(btrim(response_data->>'outside_control')) > 0
           )
         )
       ) not valid;

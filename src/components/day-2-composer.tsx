@@ -12,8 +12,9 @@ export function Day2Composer({ day, entry }: { day: ProgramDayView; entry: Journ
   const router = useRouter()
   const [state, action, pending] = useActionState(saveDayTwoEntry, null)
   
-  const initialUrgent = entry?.response_data?.urgent ?? (entry?.content && !entry?.response_data ? entry.content : '')
-  const initialCanWait = entry?.response_data?.can_wait ?? ''
+  const responseData = entry?.response_data as (import('@/app/actions').Day2ResponseData | null | undefined)
+  const initialUrgent = responseData?.urgent ?? (entry?.content && !entry?.response_data ? entry.content : '')
+  const initialCanWait = responseData?.can_wait ?? ''
   
   const [urgent, setUrgent] = useState(initialUrgent)
   const [canWait, setCanWait] = useState(initialCanWait)

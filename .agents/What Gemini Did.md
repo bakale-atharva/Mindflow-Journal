@@ -1,4 +1,4 @@
-# What Gemini Did: Waitlist Implementation & Phase 3 Groq AI Integration
+# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–3)
 
 **Date:** July 15, 2026
 
@@ -59,6 +59,26 @@ I successfully implemented the structured "Day 2: Urgency" exercise which introd
 - Introduced `DayExperienceDispatcher` to cleanly switch between the single-input Day 1 experience and the dual-input Day 2 experience without cluttering the main Today screen.
 - Enhanced the `SevenDayPath` sidebar so the **actively viewed day** perfectly highlights in pink (`bg-orchid-mist`), while the inactive ones revert to standard styles, responding directly to user design feedback.
 
+
+## Phase 4, Part 3: Day 3 Control Boundary Experience
+
+I successfully built Day 3 (the "Control" exercise), keeping true to the Seven-Day path architecture and distinct UI patterns.
+
+### 1. Database Schema & Migration (`supabase/phase_4_day_3.sql`)
+- Authored an additive SQL migration to validate Day 3's two-part structure (`within_control` and `outside_control`).
+- Backfilled all existing legacy generic Day 3 entries into the new structured JSON.
+- Re-locked the Day 2 JSON schema check to disallow raw `null` bypassing (previously permitted for incremental updates).
+- Created a developer-only internal tool (`supabase/internal_test_unlock_all_days.sql`) to safely time-travel test accounts back 6 days to bypass real-time locks.
+
+### 2. Backend Logic (`src/app/actions.ts`)
+- Upgraded `response_data` typing to a unified `StructuredResponseData` discriminated union, establishing a scalable pattern for Days 4–7.
+- Patched a critical omission in `getDashboard()` to ensure `response_data` is explicitly queried from the database so UI views load successfully.
+- Added `saveDayThreeEntry` implementing strict validation (10k character limits, 48-hour timeline enforcement) and mapping inputs into `within_control` and `outside_control` strings.
+
+### 3. Frontend Architecture (`src/components/day-3-composer.tsx`)
+- Constructed a two-pane layout to emphasize contrast: "Within your control" (seafoam styling) vs "Outside your control" (orchid styling).
+- Integrated `Day3Composer` into the existing `DayExperienceDispatcher`.
+- Connected the form with `saveDayThreeEntry`, inheriting auto-save state, reflection generation, and exact character-limit counting logic.
 
 ## Phase 1 & 2: Overview (Historical)
 I implemented the waitlist and user acquisition foundation as outlined in `User Acquisition.md` while strictly adhering to the visual constraints from `Design.md`.
