@@ -101,6 +101,16 @@ create table if not exists public.journal_entries (
         jsonb_typeof(response_data->'line_to_keep') = 'string' and
         char_length(btrim(response_data->>'note_to_friend')) > 0
       )
+    ),
+  constraint journal_entries_day_6_shape
+    check (
+      program_day <> 6 or (
+        response_data is not null and
+        (response_data->>'version') = '1' and
+        jsonb_typeof(response_data->'small_action') = 'string' and
+        jsonb_typeof(response_data->'first_moment') = 'string' and
+        char_length(btrim(response_data->>'small_action')) > 0
+      )
     )
 );
 
@@ -294,6 +304,24 @@ begin
           jsonb_typeof(response_data->'note_to_friend') = 'string' and
           jsonb_typeof(response_data->'line_to_keep') = 'string' and
           char_length(btrim(response_data->>'note_to_friend')) > 0
+        )
+      ) not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.journal_entries'::regclass
+      and conname = 'journal_entries_day_6_shape'
+  ) then
+    alter table public.journal_entries
+      add constraint journal_entries_day_6_shape
+      check (
+        program_day <> 6 or (
+          response_data is not null and
+          (response_data->>'version') = '1' and
+          jsonb_typeof(response_data->'small_action') = 'string' and
+          jsonb_typeof(response_data->'first_moment') = 'string' and
+          char_length(btrim(response_data->>'small_action')) > 0
         )
       ) not valid;
   end if;

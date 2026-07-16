@@ -1,4 +1,4 @@
-# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–5)
+# What Gemini Did: Waitlist Implementation & Core Experiences (Days 1–6)
 
 **Date:** July 15, 2026
 
@@ -59,6 +59,28 @@ I successfully implemented the structured "Day 2: Urgency" exercise which introd
 - Introduced `DayExperienceDispatcher` to cleanly switch between the single-input Day 1 experience and the dual-input Day 2 experience without cluttering the main Today screen.
 - Enhanced the `SevenDayPath` sidebar so the **actively viewed day** perfectly highlights in pink (`bg-orchid-mist`), while the inactive ones revert to standard styles, responding directly to user design feedback.
 
+
+## Phase 6: Day 6 Small Movement Experience
+
+I successfully built Day 6 (the "Small Movement" exercise), introducing a visually distinct "stepping-stone" composition to gently transition the user from reflection into action.
+
+### 1. Database Schema & Migration (`supabase/phase_4_day_6.sql`)
+- Authored an additive SQL migration to validate Day 6's specific structure (`small_action` and `first_moment`).
+- Enforced `small_action` as a strictly required field while leaving `first_moment` (making starting lighter) optional.
+- Backfilled legacy Day 6 generic text entries correctly into the `small_action` property.
+- Updated the canonical `supabase_schema.sql` constraint rules.
+
+### 2. Backend Logic (`src/app/actions.ts`)
+- Extended the `StructuredResponseData` union with `Day6ResponseData`.
+- Authored the `saveDaySixEntry` server action, incorporating the 120-hour unlock progression.
+- Handled the AI compilation formatting elegantly to combine the action and the optional "lighter moment" note.
+
+### 3. Frontend Architecture (`src/components/day-6-composer.tsx`)
+- Designed the "stepping-stone" layout to distinguish Day 6 from previous days.
+- The main required card "One small action" sits boldly at the top using a structured Porcelain design.
+- The optional card "Make starting lighter" sits below and offset to the right, utilizing Seafoam accents (`bg-[#f0fbf4]`) to represent a forward step.
+- Connected the two cards aesthetically with a beautiful gradient thread (`from-lilac/40 to-seafoam/40`) to reinforce the path metaphor, meticulously avoiding any task manager tropes (no checkboxes, no due dates).
+- Interfaced seamlessly with `DayExperienceDispatcher`.
 
 ## Phase 5: Day 5 Perspective Note Experience
 
