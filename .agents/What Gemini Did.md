@@ -36,6 +36,29 @@ I initiated Phase 4 to strictly verify the application logic and infrastructure 
 - **Live Groq Verification (G-01 to G-11)**: Successfully executed the 11-step Groq matrix test suite, verifying consented saves, immediate danger triggers (correctly classifying intent to harm and returning `safety_redirect`), locking behavior (gracefully rejecting duplicate requests), and handling API errors/timeouts without data loss. 
 - Documented all results in `docs/verification/phase-4/groq-results.md`.
 
+## Phase 4, Part 2: Day 2 Urgency Experience
+
+I successfully implemented the structured "Day 2: Urgency" exercise which introduces a two-part writing exercise ("Feels urgent" vs "Can safely wait").
+
+### Key Changes & Additions
+
+### 1. Database Schema (`supabase/phase_4_day_2.sql`)
+- Created an additive migration to introduce a `response_data` JSONB column to the `journal_entries` table.
+- Backfilled existing Day 2 generic test entries into the structured JSON format safely.
+- Added strict shape-checking constraints for Day 2 to ensure `urgent` and `can_wait` are strings and at least one has content.
+
+### 2. Backend Logic (`src/app/actions.ts`)
+- Introduced the `Day2ResponseData` typing for the JSONB data.
+- Built a dedicated `saveDayTwoEntry` server action that accepts the two-part inputs and securely generates the deterministic text combined payload for older read layers (like History and the AI moderation layer).
+- Ensured a 10,000 combined-character limit and correct duplicate protection mechanisms.
+
+### 3. Frontend Architecture (`src/components/*`)
+- Extracted the reusable `MoodSelector` so both Day 1 and Day 2 can share the identical interaction logic and UI.
+- Renamed the legacy `EntryComposer` to `Day1Composer`.
+- Built the `Day2Composer` consisting of a responsive two-column grid (coral tint for "Feels urgent" and seafoam tint for "Can safely wait").
+- Introduced `DayExperienceDispatcher` to cleanly switch between the single-input Day 1 experience and the dual-input Day 2 experience without cluttering the main Today screen.
+- Enhanced the `SevenDayPath` sidebar so the **actively viewed day** perfectly highlights in pink (`bg-orchid-mist`), while the inactive ones revert to standard styles, responding directly to user design feedback.
+
 
 ## Phase 1 & 2: Overview (Historical)
 I implemented the waitlist and user acquisition foundation as outlined in `User Acquisition.md` while strictly adhering to the visual constraints from `Design.md`.

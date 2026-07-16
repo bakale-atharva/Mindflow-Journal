@@ -7,16 +7,9 @@ import { saveEntry, type JournalEntry } from '@/app/actions'
 import type { ProgramDayView } from '@/lib/program'
 import { cn } from '@/lib/utils'
 import { ReflectionPanel } from '@/components/reflection-panel'
+import { MoodSelector } from '@/components/mood-selector'
 
-const moods = [
-  { score: 1, label: 'Heavy' },
-  { score: 2, label: 'Low' },
-  { score: 3, label: 'Steady' },
-  { score: 4, label: 'Light' },
-  { score: 5, label: 'Energized' },
-]
-
-export function EntryComposer({ day, entry }: { day: ProgramDayView; entry: JournalEntry | null }) {
+export function Day1Composer({ day, entry }: { day: ProgramDayView; entry: JournalEntry | null }) {
   const router = useRouter()
   const [state, action, pending] = useActionState(saveEntry, null)
   const [content, setContent] = useState(entry?.content ?? '')
@@ -51,18 +44,8 @@ export function EntryComposer({ day, entry }: { day: ProgramDayView; entry: Jour
       <form action={action} className="mt-7">
         <input type="hidden" name="program_day" value={day.day} />
         <input type="hidden" name="mood" value={mood ?? ''} />
-        <fieldset>
-          <legend className="text-sm font-medium text-ink/58">How does today feel? <span className="font-normal text-ink/35">Optional</span></legend>
-          <div className="mt-3 grid grid-cols-5 gap-2">
-            {moods.map((item) => (
-              <button key={item.score} type="button" title={item.label} aria-label={`${item.label}, ${item.score} out of 5`} aria-pressed={mood === item.score} onClick={() => setMood(mood === item.score ? null : item.score)} className={cn('group flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-1 py-3 transition-all', mood === item.score ? 'border-ink/25 bg-ink text-white' : 'border-ink/8 bg-porcelain text-ink/48 hover:border-ink/18')}>
-                <span className="size-5 rounded-full border-2 border-white/50 bg-[var(--mood-color)] shadow-sm" style={{ '--mood-color': `var(--mood-${item.score})` } as React.CSSProperties} />
-                <span className="truncate text-[9px] font-medium sm:text-[10px]">{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <div className="mt-6 rounded-[22px] border border-ink/10 bg-white p-4 transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-lilac/10 sm:p-5">
+        <MoodSelector mood={mood} setMood={setMood} />
+        <div className="mt-6 rounded-xl border border-ink/10 bg-white p-4 transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-lilac/10 sm:p-5">
           <textarea ref={textareaRef} name="content" required maxLength={10000} value={content} onChange={(event) => setContent(event.target.value)} placeholder="Begin wherever the thought starts…" className="min-h-56 w-full resize-none overflow-y-auto bg-transparent text-base leading-8 text-ink outline-none placeholder:text-ink/25" />
           <div className="mt-3 flex justify-end font-mono text-[10px] text-ink/35">{content.length.toLocaleString()} / 10,000</div>
         </div>

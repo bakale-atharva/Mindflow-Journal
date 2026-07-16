@@ -44,6 +44,7 @@ create table if not exists public.journal_entries (
   program_day smallint,
   prompt_id text,
   content text not null,
+  response_data jsonb,
   mood smallint,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -52,7 +53,21 @@ create table if not exists public.journal_entries (
   constraint journal_entries_mood_check
     check (mood is null or mood between 1 and 5),
   constraint journal_entries_content_check
-    check (char_length(btrim(content)) between 1 and 10000)
+    check (char_length(btrim(content)) between 1 and 10000),
+  constraint journal_entries_response_data_object
+    check (response_data is null or jsonb_typeof(response_data) = 'object'),
+  constraint journal_entries_day_2_shape
+    check (
+      program_day <> 2 or response_data is null or (
+        (response_data->>'version') = '1' and
+        jsonb_typeof(response_data->'urgent') = 'string' and
+        jsonb_typeof(response_data->'can_wait') = 'string' and
+        (
+          char_length(btrim(response_data->>'urgent')) > 0 or
+          char_length(btrim(response_data->>'can_wait')) > 0
+        )
+      )
+    )
 );
 
 alter table public.journal_entries
@@ -159,6 +174,36 @@ begin
     alter table public.journal_entries
       add constraint journal_entries_content_check
       check (char_length(btrim(content)) between 1 and 10000) not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.journal_entries'::regclass
+      and conname = 'journal_entries_response_data_object'
+  ) then
+    alter table public.journal_entries
+      add constraint journal_entries_response_data_object
+      check (response_data is null or jsonb_typeof(response_data) = 'object') not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.journal_entries'::regclass
+      and conname = 'journal_entries_day_2_shape'
+  ) then
+    alter table public.journal_entries
+      add constraint journal_entries_day_2_shape
+      check (
+        program_day <> 2 or response_data is null or (
+          (response_data->>'version') = '1' and
+          jsonb_typeof(response_data->'urgent') = 'string' and
+          jsonb_typeof(response_data->'can_wait') = 'string' and
+          (
+            char_length(btrim(response_data->>'urgent')) > 0 or
+            char_length(btrim(response_data->>'can_wait')) > 0
+          )
+        )
+      ) not valid;
   end if;
 
   if not exists (

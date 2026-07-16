@@ -145,6 +145,7 @@ Approved notice:
 - `program_day`: integer constrained from 1 to 7.
 - `prompt_id`: stable text identifier such as `day-1-mental-load`.
 - `content`: non-empty text with application limit of 10,000 characters.
+- `response_data`: nullable JSONB object for structured exercises (e.g. Day 2).
 - `mood`: nullable integer constrained from 1 to 5.
 - `created_at` and `updated_at`: timestamps.
 - Unique key: `(user_id, program_day)`.
