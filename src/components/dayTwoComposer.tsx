@@ -4,12 +4,15 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Save } from "lucide-react";
 import { saveDayTwoEntry, type JournalEntry } from "@/app/actions";
+import type { ProgramDayView } from "@/lib/program";
 import { ReflectionPanel } from "@/components/reflection-panel";
 import { MoodSelector } from "@/components/mood-selector";
 
 export function DayTwoComposer({
+  day,
   entry,
 }: {
+  day: ProgramDayView;
   entry: JournalEntry | null;
 }) {
   const router = useRouter();
