@@ -283,7 +283,7 @@ export function ProgramInsightPanel({
       </div>
 
       <p className="mt-6 text-xs text-ink/40 font-mono text-center">
-        This report is ephemeral and will self-destruct 30 minutes after generation.
+        Your journals and insights are yours only. If you wish to save your insight, you have 30 minutes to download or email it before it is deleted from our servers.
       </p>
     </section>
   );
