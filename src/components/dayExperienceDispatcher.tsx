@@ -4,9 +4,9 @@ import { DayOneComposer } from "@/components/dayOneComposer";
 import { DayTwoComposer } from "@/components/dayTwoComposer";
 import { DayThreeComposer } from "@/components/dayThreeComposer";
 import { DayFourComposer } from "@/components/dayFourComposer";
-import { Day5Composer } from "@/components/day-5-composer";
-import { Day6Composer } from "@/components/day-6-composer";
-import { Day7Composer } from "@/components/day-7-composer";
+import { DayFiveComposer } from "@/components/dayFiveComposer";
+import { DaySixComposer } from "@/components/daySixComposer";
+import { DaySevenComposer } from "@/components/daySevenComposer";
 
 export function DayExperienceDispatcher({
   day,
@@ -28,15 +28,15 @@ export function DayExperienceDispatcher({
   }
 
   if (day.day === 5) {
-    return <Day5Composer day={day} entry={entry} />;
+    return <DayFiveComposer day={day} entry={entry} />;
   }
 
   if (day.day === 6) {
-    return <Day6Composer day={day} entry={entry} />;
+    return <DaySixComposer day={day} entry={entry} />;
   }
 
   if (day.day === 7) {
-    return <Day7Composer day={day} entry={entry} />;
+    return <DaySevenComposer day={day} entry={entry} />;
   }
 
   return <DayOneComposer day={day} entry={entry} />;

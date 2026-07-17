@@ -77,19 +77,19 @@ export type DayFourResponseData = {
   usual_moment: string;
 };
 
-export type Day5ResponseData = {
+export type DayFiveResponseData = {
   version: 1;
   note_to_friend: string;
   line_to_keep: string;
 };
 
-export type Day6ResponseData = {
+export type DaySixResponseData = {
   version: 1;
   small_action: string;
   first_moment: string;
 };
 
-export type Day7ResponseData = {
+export type DaySevenResponseData = {
   version: 1;
   became_clearer: string;
   carry_forward: string;
@@ -99,9 +99,9 @@ export type StructuredResponseData =
   | DayTwoResponseData
   | DayThreeResponseData
   | DayFourResponseData
-  | Day5ResponseData
-  | Day6ResponseData
-  | Day7ResponseData
+  | DayFiveResponseData
+  | DaySixResponseData
+  | DaySevenResponseData
   | null;
 
 export type JournalEntry = {
@@ -530,7 +530,7 @@ export async function saveDayFiveEntry(
   if (line_to_keep) combinedParts.push(`A line to keep for myself:\n${line_to_keep}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  const response_data: Day5ResponseData = { version: 1, note_to_friend, line_to_keep };
+  const response_data: DayFiveResponseData = { version: 1, note_to_friend, line_to_keep };
 
   return processAndSaveEntry({
     day: 5,
@@ -556,7 +556,7 @@ export async function saveDaySixEntry(
   if (first_moment) combinedParts.push(`The moment I can take it:\n${first_moment}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  const response_data: Day6ResponseData = { version: 1, small_action, first_moment };
+  const response_data: DaySixResponseData = { version: 1, small_action, first_moment };
 
   return processAndSaveEntry({
     day: 6,
@@ -582,7 +582,7 @@ export async function saveDaySevenEntry(
   if (carry_forward) combinedParts.push(`What I will carry forward:\n${carry_forward}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  const response_data: Day7ResponseData = { version: 1, became_clearer, carry_forward };
+  const response_data: DaySevenResponseData = { version: 1, became_clearer, carry_forward };
 
   return processAndSaveEntry({
     day: 7,

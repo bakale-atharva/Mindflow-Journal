@@ -111,7 +111,7 @@ I successfully built Day 7 (the "Closing Review" exercise), which serves as the 
 - Updated the canonical `supabase_schema.sql` constraint rules.
 
 ### 2. Backend Logic (`src/app/actions.ts`)
-- Extended the `StructuredResponseData` union with `Day7ResponseData`.
+- Extended the `StructuredResponseData` union with `DaySevenResponseData`.
 - Authored the `saveDaySevenEntry` server action, incorporating the 144-hour unlock progression.
 - Carefully executed the `program_completed` product event logic by guaranteeing it triggers correctly when the 7th and final entry is submitted.
 
@@ -133,7 +133,7 @@ I successfully built Day 6 (the "Small Movement" exercise), introducing a visual
 - Updated the canonical `supabase_schema.sql` constraint rules.
 
 ### 2. Backend Logic (`src/app/actions.ts`)
-- Extended the `StructuredResponseData` union with `Day6ResponseData`.
+- Extended the `StructuredResponseData` union with `DaySixResponseData`.
 - Authored the `saveDaySixEntry` server action, incorporating the 120-hour unlock progression.
 - Handled the AI compilation formatting elegantly to combine the action and the optional "lighter moment" note.
 
@@ -155,7 +155,7 @@ I successfully built Day 5 (the "Perspective Note" exercise), shifting from the 
 - Updated the canonical `supabase_schema.sql` constraint rules.
 
 ### 2. Backend Logic (`src/app/actions.ts`)
-- Extended the `StructuredResponseData` union with `Day5ResponseData`.
+- Extended the `StructuredResponseData` union with `DayFiveResponseData`.
 - Authored the `saveDayFiveEntry` server action, incorporating the 96-hour unlock progression.
 - Ensured the `content` field for AI generation neatly formats the note without introducing messy artifacts if the optional line is omitted.
 
@@ -163,7 +163,7 @@ I successfully built Day 5 (the "Perspective Note" exercise), shifting from the 
 - Designed a distinct letter-card UI. The main "What you would say" area uses a large warm porcelain editorial canvas with subtle horizontal ruling lines (like a notepad).
 - Built a bespoke CSS "folded paper corner" detail on the top right to anchor the letter metaphor without relying on explicit send/envelope semantics.
 - Positioned the optional "A line to keep" as a smaller Orchid Mist inset card slightly offset below the main note.
-- Integrated `Day5Composer` seamlessly into `DayExperienceDispatcher`.
+- Integrated `DayFiveComposer` seamlessly into `DayExperienceDispatcher`.
 
 ## Phase 4, Part 4: Day 4 Recurrence Loop Experience
 
