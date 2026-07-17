@@ -20,6 +20,7 @@ import {
 import { generateReflection, type ReflectionResult } from "@/lib/reflections";
 import { hashJournalEntries } from "@/lib/program-review";
 import { createClient } from "@/lib/server";
+import { hasActiveNvidiaConsent, NVIDIA_CONSENT_VERSION } from "@/lib/nvidia-ai";
 
 export type ReflectionStatus =
   | "pending"
@@ -295,8 +296,8 @@ export async function completeOnboarding(
     .update({
       is_18_or_older: true,
       ai_processing_consent_at: consentChoice === "yes" ? now : null,
-      ai_processing_provider: consentChoice === "yes" ? "groq" : null,
-      ai_consent_version: consentChoice === "yes" ? 2 : null,
+      ai_processing_provider: consentChoice === "yes" ? "nvidia" : null,
+      ai_consent_version: consentChoice === "yes" ? NVIDIA_CONSENT_VERSION : null,
       ai_processing_consent_revoked_at: null,
       onboarding_completed_at: now,
       program_started_at: now,
@@ -428,13 +429,7 @@ async function processAndSaveEntry({
     after(() => recordProductEvent(user.id, "program_completed"));
   }
 
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  const reflection = hasGroqConsent
+  const reflection = hasActiveNvidiaConsent(profile)
     ? await generateReflection(entry)
     : { status: "not_requested" as const, reflection: null, question: null };
 
@@ -645,13 +640,7 @@ export async function retryReflection(
   if (!entry)
     return { status: "error", error: "This entry could not be found." };
 
-  const hasGroqConsent =
-    profile?.ai_processing_consent_at !== null &&
-    profile?.ai_processing_consent_revoked_at === null &&
-    profile?.ai_processing_provider === "groq" &&
-    profile?.ai_consent_version === 2;
-
-  if (!hasGroqConsent)
+  if (!profile || !hasActiveNvidiaConsent(profile))
     return {
       status: "error",
       error: "Turn on AI reflections in Settings before retrying.",
@@ -709,8 +698,8 @@ export async function updateAiConsent(
     .from("profiles")
     .update({
       ai_processing_consent_at: enabled ? now : null,
-      ai_processing_provider: enabled ? "groq" : null,
-      ai_consent_version: enabled ? 2 : null,
+      ai_processing_provider: enabled ? "nvidia" : null,
+      ai_consent_version: enabled ? NVIDIA_CONSENT_VERSION : null,
       ai_processing_consent_revoked_at: enabled ? null : now,
     })
     .eq("user_id", user.id);
@@ -781,13 +770,7 @@ export async function generateProgramReview(
 
   if (!profile?.program_started_at) return { status: "error", error: "Program not started." };
   
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  if (!hasGroqConsent) return { status: "error", error: "Consent required for reflection." };
+  if (!hasActiveNvidiaConsent(profile)) return { status: "error", error: "Consent required for reflection." };
 
   const { data: entries } = await supabase
     .from("journal_entries")
@@ -831,13 +814,7 @@ export async function retryProgramReview(
 
   if (!profile?.program_started_at) return { status: "error", error: "Program not started." };
   
-  const hasGroqConsent =
-    profile.ai_processing_consent_at !== null &&
-    profile.ai_processing_consent_revoked_at === null &&
-    profile.ai_processing_provider === "groq" &&
-    profile.ai_consent_version === 2;
-
-  if (!hasGroqConsent) return { status: "error", error: "Consent required for reflection." };
+  if (!hasActiveNvidiaConsent(profile)) return { status: "error", error: "Consent required for reflection." };
 
   const { data: entries } = await supabase
     .from("journal_entries")

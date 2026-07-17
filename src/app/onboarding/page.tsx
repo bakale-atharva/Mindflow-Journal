@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getDashboard } from '@/app/actions'
 import { OnboardingFlow } from '@/components/onboarding-flow'
-import { ThoughtContour } from '@/components/thought-contour'
+import { ThoughtContour } from '@/components/thoughtContour'
 
 export default async function OnboardingPage() {
   const dashboard = await getDashboard()

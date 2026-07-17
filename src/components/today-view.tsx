@@ -3,9 +3,9 @@ import { ArrowRight, BookOpenText, Clock3, Hourglass, ShieldCheck } from 'lucide
 import { format } from 'date-fns'
 import type { DashboardData, JournalEntry } from '@/app/actions'
 import type { ProgramDayView } from '@/lib/program'
-import { DayExperienceDispatcher } from '@/components/day-experience-dispatcher'
+import { DayExperienceDispatcher } from '@/components/dayExperienceDispatcher'
 import { SevenDayPath } from '@/components/seven-day-path'
-import { ThoughtContour } from '@/components/thought-contour'
+import { ThoughtContour } from '@/components/thoughtContour'
 import { ProgramReviewPanel } from '@/components/program-review-panel'
 
 export function TodayView({ dashboard, activeDay, activeEntry }: { dashboard: DashboardData; activeDay: ProgramDayView; activeEntry: JournalEntry | null }) {

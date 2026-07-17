@@ -3,7 +3,7 @@ import { ArrowUpRight, BookOpenText, LockKeyhole, Sparkles } from 'lucide-react'
 import { format } from 'date-fns'
 import type { DashboardData } from '@/app/actions'
 import { getPrompt } from '@/lib/program'
-import { ThoughtContour } from '@/components/thought-contour'
+import { ThoughtContour } from '@/components/thoughtContour'
 
 const moodLabels: Record<number, string> = { 1: 'Heavy', 2: 'Low', 3: 'Steady', 4: 'Light', 5: 'Energized' }
 

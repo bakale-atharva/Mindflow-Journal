@@ -1,8 +1,8 @@
 import 'server-only'
 
 import crypto from 'crypto'
-import Groq from 'groq-sdk'
 import { createAdminClient } from '@/lib/admin'
+import { getNvidiaAiConfig, parseJsonObject } from '@/lib/nvidia-ai'
 
 export const IMMEDIATE_DANGER_NOTICE =
   'MindFlow isn’t equipped to help with immediate danger. If you may act on thoughts of harming yourself or someone else, contact local emergency services now or reach out to someone you trust.'
@@ -24,13 +24,13 @@ function normalizeAndHashContent(content: string): string {
 
 export async function generateReflection(entry: ReflectionEntry, retry = false): Promise<ReflectionResult> {
   const admin = createAdminClient()
-  const apiKey = process.env.GROQ_API_KEY
-  if (!admin || !apiKey) return { status: 'failed', reflection: null, question: null }
+  const config = getNvidiaAiConfig()
+  if (!admin || !config) return { status: 'failed', reflection: null, question: null }
 
   const contentHash = normalizeAndHashContent(entry.content)
-  const provider = 'groq'
-  const reflectionModel = process.env.GROQ_REFLECTION_MODEL ?? 'openai/gpt-oss-20b'
-  const safetyModel = process.env.GROQ_SAFETY_MODEL ?? 'openai/gpt-oss-safeguard-20b'
+  const provider = config.provider
+  const reflectionModel = config.reflectionModel
+  const safetyModel = config.safetyModel
 
   const { data: claimResult, error: claimError } = await admin.rpc('claim_reflection_generation', {
     p_entry_id: entry.id,
@@ -58,7 +58,7 @@ export async function generateReflection(entry: ReflectionEntry, retry = false):
   if (claimResult === 'retry_exhausted') return { status: 'retry_exhausted', reflection: null, question: null }
   if (claimResult === 'not_authorized' || claimResult === 'entry_not_found') return { status: 'failed', reflection: null, question: null }
 
-  // Must be 'claimed' at this point. Time to call Groq.
+  // Must be 'claimed' at this point. Time to call NVIDIA.
   
   // We need to fetch the generation token so we can safely update it later
   const { data: pendingData } = await admin.from('ai_reflections').select('generation_token').eq('entry_id', entry.id).single()
@@ -66,9 +66,8 @@ export async function generateReflection(entry: ReflectionEntry, retry = false):
 
   try {
     // 1. Safety Check
-    const groq = new Groq({ apiKey, maxRetries: 0 })
     const safetyStart = Date.now()
-    const safetyResponse = await groq.chat.completions.create({
+    const safetyResponse = await config.client.chat.completions.create({
       model: safetyModel,
       messages: [
         {
@@ -77,7 +76,6 @@ export async function generateReflection(entry: ReflectionEntry, retry = false):
         },
         { role: 'user', content: entry.content }
       ],
-      response_format: { type: 'json_object' },
       temperature: 0,
       max_tokens: 100,
     }, { timeout: 15000 })
@@ -85,7 +83,7 @@ export async function generateReflection(entry: ReflectionEntry, retry = false):
     const safetyLatency = Date.now() - safetyStart
     const safetyInputTokens = safetyResponse.usage?.prompt_tokens ?? 0
     const safetyOutputTokens = safetyResponse.usage?.completion_tokens ?? 0
-    const safetyContent = JSON.parse(safetyResponse.choices[0]?.message?.content ?? '{}')
+    const safetyContent = parseJsonObject(safetyResponse.choices[0]?.message?.content)
 
     if (safetyContent.decision === 'immediate_danger') {
       await admin.from('ai_reflections')
@@ -107,7 +105,7 @@ export async function generateReflection(entry: ReflectionEntry, retry = false):
 
     // 2. Reflection Generation
     const reflectionStart = Date.now()
-    const reflectionResponse = await groq.chat.completions.create({
+    const reflectionResponse = await config.client.chat.completions.create({
       model: reflectionModel,
       messages: [
         {
@@ -116,7 +114,6 @@ export async function generateReflection(entry: ReflectionEntry, retry = false):
         },
         { role: 'user', content: entry.content }
       ],
-      response_format: { type: 'json_object' },
       temperature: 0.4,
       max_tokens: 300,
     }, { timeout: 15000 })
@@ -124,7 +121,7 @@ export async function generateReflection(entry: ReflectionEntry, retry = false):
     const reflectionLatency = Date.now() - reflectionStart
     const reflectionInputTokens = reflectionResponse.usage?.prompt_tokens ?? 0
     const reflectionOutputTokens = reflectionResponse.usage?.completion_tokens ?? 0
-    const parsed = JSON.parse(reflectionResponse.choices[0]?.message?.content ?? '{}') as { reflection?: unknown; question?: unknown }
+    const parsed = parseJsonObject(reflectionResponse.choices[0]?.message?.content) as { reflection?: unknown; question?: unknown }
     
     const reflection = typeof parsed.reflection === 'string' ? parsed.reflection.trim() : ''
     const question = typeof parsed.question === 'string' ? parsed.question.trim() : null

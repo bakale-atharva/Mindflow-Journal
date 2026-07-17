@@ -1,9 +1,9 @@
 import 'server-only'
 
 import crypto from 'crypto'
-import Groq from 'groq-sdk'
 import type { JournalEntry, ProgramReviewStatus } from '@/app/actions'
 import { createAdminClient } from '@/lib/admin'
+import { getNvidiaAiConfig, parseJsonObject } from '@/lib/nvidia-ai'
 
 export type ProgramReviewResult =
   | { status: 'complete'; reflection: string; practice: string | null }
@@ -23,12 +23,12 @@ export async function generateProgramReviewHelper(
   isRetry: boolean = false
 ): Promise<ProgramReviewResult> {
   const admin = createAdminClient()
-  const apiKey = process.env.GROQ_API_KEY
-  if (!admin || !apiKey) return { status: 'failed', reflection: null, practice: null }
+  const config = getNvidiaAiConfig()
+  if (!admin || !config) return { status: 'failed', reflection: null, practice: null }
 
-  const provider = 'groq'
-  const reflectionModel = process.env.GROQ_REFLECTION_MODEL ?? 'openai/gpt-oss-20b'
-  const safetyModel = process.env.GROQ_SAFETY_MODEL ?? 'openai/gpt-oss-safeguard-20b'
+  const provider = config.provider
+  const reflectionModel = config.reflectionModel
+  const safetyModel = config.safetyModel
 
   // Mark as pending or increment retry count
   const { data: existing } = await admin
@@ -66,17 +66,15 @@ export async function generateProgramReviewHelper(
     })
   }
 
-  // Combine entries for Groq
+  // Combine entries for NVIDIA
   const combinedContent = [...entries]
     .sort((a, b) => a.program_day - b.program_day)
     .map(e => `Day ${e.program_day}:\n${e.content}`)
     .join('\n\n')
 
   try {
-    const groq = new Groq({ apiKey, maxRetries: 0 })
-    
     // 1. Safety Check
-    const safetyResponse = await groq.chat.completions.create({
+    const safetyResponse = await config.client.chat.completions.create({
       model: safetyModel,
       messages: [
         {
@@ -85,12 +83,11 @@ export async function generateProgramReviewHelper(
         },
         { role: 'user', content: combinedContent }
       ],
-      response_format: { type: 'json_object' },
       temperature: 0,
       max_tokens: 100,
     }, { timeout: 15000 })
     
-    const safetyContent = JSON.parse(safetyResponse.choices[0]?.message?.content ?? '{}')
+    const safetyContent = parseJsonObject(safetyResponse.choices[0]?.message?.content)
 
     if (safetyContent.decision === 'immediate_danger') {
       await admin.from('ai_program_reviews')
@@ -100,7 +97,7 @@ export async function generateProgramReviewHelper(
     }
 
     // 2. Generation
-    const reflectionResponse = await groq.chat.completions.create({
+    const reflectionResponse = await config.client.chat.completions.create({
       model: reflectionModel,
       messages: [
         {
@@ -109,12 +106,11 @@ export async function generateProgramReviewHelper(
         },
         { role: 'user', content: combinedContent }
       ],
-      response_format: { type: 'json_object' },
       temperature: 0.4,
       max_tokens: 500,
     }, { timeout: 20000 })
 
-    const parsed = JSON.parse(reflectionResponse.choices[0]?.message?.content ?? '{}')
+    const parsed = parseJsonObject(reflectionResponse.choices[0]?.message?.content)
     const reflection = typeof parsed.reflection === 'string' ? parsed.reflection.trim() : ''
     const practice = typeof parsed.practice === 'string' ? parsed.practice.trim() : null
 

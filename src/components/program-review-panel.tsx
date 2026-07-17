@@ -4,14 +4,11 @@ import { useActionState, useEffect } from 'react'
 import { Sparkles, Check, RefreshCw, TriangleAlert } from 'lucide-react'
 import type { DashboardData } from '@/app/actions'
 import { generateProgramReview, retryProgramReview, keepProgramPractice, updateAiConsent } from '@/app/actions'
+import { hasActiveNvidiaConsent } from '@/lib/nvidia-ai'
 
 export function ProgramReviewPanel({ dashboard, currentHash }: { dashboard: DashboardData; currentHash: string }) {
   const review = dashboard.programReview
-  const hasGroqConsent =
-    dashboard.profile.ai_processing_consent_at !== null &&
-    dashboard.profile.ai_processing_consent_revoked_at === null &&
-    dashboard.profile.ai_processing_provider === 'groq' &&
-    dashboard.profile.ai_consent_version === 2
+  const hasNvidiaConsent = hasActiveNvidiaConsent(dashboard.profile)
 
   const [genState, genAction, isGenerating] = useActionState(generateProgramReview, null)
   const [retryState, retryAction, isRetrying] = useActionState(retryProgramReview, null)
@@ -30,7 +27,7 @@ export function ProgramReviewPanel({ dashboard, currentHash }: { dashboard: Dash
     }
   }, [isPending])
 
-  if (!hasGroqConsent) {
+  if (!hasNvidiaConsent) {
     return (
       <section className="surface mt-6 rounded-[32px] p-7 sm:p-10 flex flex-col items-center text-center">
         <Sparkles className="size-6 text-ink/35 mb-4" />

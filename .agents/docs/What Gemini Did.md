@@ -2,7 +2,26 @@
 
 **Date:** July 15, 2026
 
-## Phase 3: Groq AI Integration
+## Phase 9: NVIDIA AI Reflections Integration
+
+I completed the migration from Groq to NVIDIA's OpenAI-compatible API for entry reflections and seven-day program reviews, continuing to prioritize strict data privacy and versioned user consent.
+
+### Key Changes & Additions
+
+### 1. Centralized NVIDIA Configuration (`src/lib/nvidia-ai.ts`)
+- **Server-Only Module**: Implemented a secure `server-only` configuration module (`getNvidiaAiConfig`) that centralizes the NVIDIA API key validation and models (`meta/llama-3.1-70b-instruct` and `meta/llama-3.1-8b-instruct`).
+- **Robust JSON Parsing**: Added `parseJsonObject` which safely wraps `JSON.parse` and explicitly throws an error if the output is not a generic JSON object (e.g., rejecting arrays or malformed strings), ensuring strict downstream expectations.
+- **Strict Consent Rules**: Defined `hasActiveNvidiaConsent` to explicitly require `ai_processing_provider === 'nvidia'` and `ai_consent_version === 3`.
+
+### 2. Frontend Consent Updates
+- **Onboarding & Settings**: Migrated all onboarding language and settings panels from "Groq" to "NVIDIA".
+- **Legacy Consent Handling**: Version 2 Groq consent is now treated strictly as legacy. Existing users are presented with a clear warning in their settings panel explaining their legacy consent is no longer valid and they must actively "Update to NVIDIA AI reflections".
+
+### 3. Backend & Generation Flow
+- **Dual-Model Generation**: Refactored `generateReflection` and `generateProgramReview` to depend entirely on `getNvidiaAiConfig` and the new parser, completely decoupling the system from the deprecated `groq-sdk`.
+- **Cleanup**: Removed `groq-sdk` from dependencies, deleted Groq API key configuration, and renamed `test-groq` route to `test-nvidia`.
+
+## Phase 3: Groq AI Integration (Legacy)
 
 I completed the implementation of Phase 3, successfully migrating the AI reflections architecture from OpenAI to Groq, prioritizing data privacy and structured safety measures.
 

@@ -1,8 +1,8 @@
-import { ThoughtContour } from '@/components/thought-contour'
+import { ThoughtContour } from "@/components/thoughtContour";
 
 export default function Loading() {
   return (
-    <div className="mx-auto max-w-[1280px] animate-pulse px-4 py-6 sm:px-7 sm:py-10 lg:px-10">
+    <div className="mx-auto max-w-7xl animate-pulse px-4 py-6 sm:px-7 sm:py-10 lg:px-10">
       <div className="h-3 w-32 rounded-full bg-ink/8" />
       <div className="mt-4 h-9 w-56 rounded-2xl bg-ink/8" />
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -14,5 +14,5 @@ export default function Loading() {
       </div>
       <span className="sr-only">Loading your journal</span>
     </div>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { LockKeyhole, ShieldCheck } from "lucide-react";
 import { MagicLinkForm } from "@/components/magic-link-form";
-import { ThoughtContour } from "@/components/thought-contour";
+import { ThoughtContour } from "@/components/thoughtContour";
 import { getBetaUser } from "@/lib/auth";
 
 const AUTH_ERRORS: Record<string, string> = {
