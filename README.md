@@ -91,7 +91,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # Optional AI reflections and seven-day review
 NVIDIA_API_KEY=<server-only-nvidia-key>
-NVIDIA_REFLECTION_MODEL=nvidia/llama-3.3-nemotron-super-49b-v1.5
+NVIDIA_REFLECTION_MODEL=openai/gpt-oss-20b
 NVIDIA_SAFETY_MODEL=nvidia/llama-3.1-nemoguard-8b-content-safety
 ```
 

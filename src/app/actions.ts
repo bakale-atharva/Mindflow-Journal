@@ -18,6 +18,7 @@ import {
 } from "@/lib/program";
 import { generateReflection, type ReflectionResult } from "@/lib/reflections";
 import { hashJournalEntries } from "@/lib/program-review";
+import { isOptionalProgramInsightRelationError } from "@/lib/program-insights";
 import { createClient } from "@/lib/server";
 import { hasActiveNvidiaConsent, NVIDIA_CONSENT_VERSION } from "@/lib/nvidia-ai-config";
 
@@ -43,18 +44,19 @@ export type ProgramReviewStatus =
   | "failed"
   | "safety_redirect";
 
-export type ProgramReview = {
+export type ProgramInsightResponse = {
   id: string;
   user_id: string;
   source_hash: string;
   status: ProgramReviewStatus;
   provider: string | null;
   model: string | null;
-  safety_flags: unknown | null;
-  reflection: string | null;
-  practice: string | null;
-  practice_kept_at: string | null;
+  report_json: unknown | null;
+  generation_token: string | null;
   attempt_count: number;
+  error_code: string | null;
+  expires_at: string;
+  email_sent_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -135,7 +137,7 @@ export type DashboardData = {
   currentDay: ProgramDay | null;
   nextUnlockAt: string | null;
   completed: boolean;
-  programReview: ProgramReview | null;
+  programInsight: ProgramInsightResponse | null;
   sourceHash: string;
 };
 
@@ -194,9 +196,9 @@ export async function getDashboard(): Promise<DashboardData> {
       )
       .eq("user_id", user.id),
     supabase
-      .from("ai_program_reviews")
+      .from("ai_program_insights")
       .select(
-        "id, user_id, source_hash, status, provider, model, safety_flags, reflection, practice, practice_kept_at, attempt_count, created_at, updated_at",
+        "id, user_id, source_hash, status, provider, model, report_json, generation_token, attempt_count, error_code, expires_at, email_sent_at, created_at, updated_at",
       )
       .eq("user_id", user.id)
       .maybeSingle(),
@@ -206,8 +208,20 @@ export async function getDashboard(): Promise<DashboardData> {
     throw new Error("Your journal entries could not be loaded.");
   if (reflectionsResult.error)
     throw new Error("Your reflections could not be loaded.");
-  if (reviewResult.error)
-    throw new Error("Your program review could not be loaded.");
+  if (reviewResult.error && !isOptionalProgramInsightRelationError(reviewResult.error)) {
+    console.error("Program insight query failed", {
+      code: reviewResult.error.code,
+      message: reviewResult.error.message,
+    });
+    throw new Error("Your clarity map could not be loaded.");
+  }
+
+  if (reviewResult.error) {
+    console.warn("Program insight relation is not available yet", {
+      code: reviewResult.error.code,
+      message: reviewResult.error.message,
+    });
+  }
 
   const reflectionByEntry = new Map(
     (reflectionsResult.data ?? []).map((reflection) => [
@@ -238,7 +252,9 @@ export async function getDashboard(): Promise<DashboardData> {
         ? getUnlockTime(startedAt, (currentDay + 1) as ProgramDay).toISOString()
         : null,
     completed,
-    programReview: (reviewResult.data as ProgramReview) ?? null,
+    programInsight: reviewResult.error
+      ? null
+      : ((reviewResult.data as ProgramInsightResponse) ?? null),
     sourceHash: hashJournalEntries(entries),
   };
 }
@@ -824,26 +840,6 @@ export async function retryProgramReview(
   return { status: "success", message: "Review generated" };
 }
 
-export async function keepProgramPractice(
-  _previous: BasicActionState,
-  _formData: FormData,
-): Promise<BasicActionState> {
-  const user = await requireBetaUser();
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("ai_program_reviews")
-    .update({ practice_kept_at: new Date().toISOString() })
-    .eq("user_id", user.id)
-    .is("practice_kept_at", null);
-
-  if (error) return { status: "error", error: "Could not keep practice." };
-
-  revalidatePath("/");
-  revalidatePath("/journal");
-  return { status: "success", message: "Practice kept." };
-}
-
 export async function deleteAccount(
   _previous: BasicActionState,
   formData: FormData,
@@ -870,4 +866,57 @@ export async function deleteAccount(
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/auth/login");
+}
+
+export async function dismissProgramInsightAction(): Promise<BasicActionState> {
+  const user = await requireBetaUser();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("ai_program_insights")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Failed to dismiss insight:", error);
+    return { status: "error", error: "Could not dismiss your insights at this time." };
+  }
+
+  await recordProductEvent(user.id, "insight_deleted");
+  return { status: "success", message: "Insight dismissed." };
+}
+
+export async function emailProgramInsightAction(): Promise<BasicActionState> {
+  const user = await requireBetaUser();
+  const supabase = await createClient();
+
+  const { data: insight } = await supabase
+    .from("ai_program_insights")
+    .select("report_json, email_sent_at, expires_at")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!insight) return { status: "error", error: "Insight not found." };
+  if (new Date(insight.expires_at) <= new Date()) return { status: "error", error: "Insight has expired." };
+  if (insight.email_sent_at) return { status: "error", error: "Email was already sent." };
+
+  const { sendInsightEmail } = await import('@/lib/email');
+
+  // We need the user's email to send it
+  const { data: profile } = await supabase.from("profiles").select("email").eq("user_id", user.id).single();
+  if (!profile?.email) return { status: "error", error: "Could not find your email address." };
+
+  const success = await sendInsightEmail(profile.email, insight.report_json);
+
+  if (!success) {
+    return { status: "error", error: "Failed to send email." };
+  }
+
+  await supabase
+    .from("ai_program_insights")
+    .update({ email_sent_at: new Date().toISOString() })
+    .eq("user_id", user.id);
+
+  await recordProductEvent(user.id, "insight_emailed");
+  return { status: "success", message: "Insight emailed." };
 }

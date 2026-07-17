@@ -6,7 +6,7 @@ import type { ProgramDayView } from "@/lib/program";
 import { DayExperienceDispatcher } from "@/components/dayExperienceDispatcher";
 import { SevenDayPath } from "@/components/sevenDayPath";
 import { ThoughtContour } from "@/components/thoughtContour";
-import { ProgramReviewPanel } from "@/components/programReviewPanel";
+import { ProgramInsightPanel } from "@/components/program-insight-panel";
 
 export function TodayView({
   dashboard,
@@ -22,12 +22,8 @@ export function TodayView({
     return (
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-10 lg:px-10">
         <MobileBrand />
-        <section className="surface relative overflow-hidden rounded-[32px] p-7 sm:p-12">
-          <ThoughtContour
-            mood={5}
-            className="absolute inset-y-0 right-0 hidden w-1/2 opacity-65 md:block"
-          />
-          <div className="relative z-10 max-w-xl">
+        <section className="surface grid overflow-hidden rounded-[32px] p-7 sm:p-12 md:grid-cols-[minmax(0,0.56fr)_minmax(280px,0.44fr)] md:items-stretch md:gap-8">
+          <div className="relative z-10 md:py-2 md:pr-2">
             <p className="font-mono text-[11px] uppercase tracking-[.18em] text-primary">
               Seven-day journal complete
             </p>
@@ -46,6 +42,12 @@ export function TodayView({
               <ArrowRight className="size-4" />
             </Link>
           </div>
+          <div className="relative hidden min-h-[360px] overflow-hidden md:block">
+            <ThoughtContour
+              mood={5}
+              className="absolute inset-0 min-h-0 opacity-65"
+            />
+          </div>
         </section>
         <div className="surface mt-6 rounded-2xl p-6">
           <SevenDayPath
@@ -54,7 +56,7 @@ export function TodayView({
             activeDay={activeDay.day}
           />
         </div>
-        <ProgramReviewPanel
+        <ProgramInsightPanel
           dashboard={dashboard}
           currentHash={dashboard.sourceHash}
         />

@@ -1,5 +1,5 @@
 export const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1'
-export const NVIDIA_CONSENT_VERSION = 3
+export const NVIDIA_CONSENT_VERSION = 4
 
 export type AiConsentProfile = {
   ai_processing_consent_at: string | null
@@ -19,7 +19,7 @@ export function getNvidiaAiConfig(env: NodeJS.ProcessEnv = process.env): NvidiaA
 
   return {
     provider: 'nvidia',
-    reflectionModel: env.NVIDIA_REFLECTION_MODEL ?? 'nvidia/llama-3.3-nemotron-super-49b-v1.5',
+    reflectionModel: env.NVIDIA_REFLECTION_MODEL ?? 'openai/gpt-oss-20b',
     safetyModel: env.NVIDIA_SAFETY_MODEL ?? 'nvidia/llama-3.1-nemoguard-8b-content-safety',
   }
 }

@@ -5,10 +5,33 @@ import type { JournalEntry, ProgramReviewStatus } from '@/app/actions'
 import { createAdminClient } from '@/lib/admin'
 import { getNvidiaAiConfig } from '@/lib/nvidia-ai'
 import { parseJsonObject } from '@/lib/nvidia-ai-config'
+import {
+  PROGRAM_INSIGHT_GENERATION_TIMEOUT_MS,
+  PROGRAM_INSIGHT_MAX_TOKENS,
+  PROGRAM_INSIGHT_REASONING_EFFORT,
+} from '@/lib/program-insight-request'
+
+export type ProgramInsight = {
+  overview: string
+  recurring_threads: Array<{
+    label: string
+    explanation: string
+    evidence_days: number[]
+  }>
+  perspective_shifts: Array<{
+    explanation: string
+    evidence_days: number[]
+  }>
+  clarity_in_practice: Array<{
+    explanation: string
+    evidence_days: number[]
+  }>
+  carry_forward: string
+}
 
 export type ProgramReviewResult =
-  | { status: 'complete'; reflection: string; practice: string | null }
-  | { status: 'safety_redirect' | 'failed' | 'pending' | 'not_authorized' | 'consent_required' | 'retry_exhausted'; reflection: null; practice: null }
+  | { status: 'complete'; insight: ProgramInsight }
+  | { status: 'safety_redirect' | 'failed' | 'pending' | 'not_authorized' | 'consent_required' | 'retry_exhausted'; insight: null }
 
 export function hashJournalEntries(entries: JournalEntry[]): string {
   // Sort entries to ensure deterministic ordering by day 1 to 7
@@ -25,47 +48,39 @@ export async function generateProgramReviewHelper(
 ): Promise<ProgramReviewResult> {
   const admin = createAdminClient()
   const config = getNvidiaAiConfig()
-  if (!admin || !config) return { status: 'failed', reflection: null, practice: null }
+  if (!admin || !config) return { status: 'failed', insight: null }
 
   const provider = config.provider
   const reflectionModel = config.reflectionModel
   const safetyModel = config.safetyModel
 
   // Mark as pending or increment retry count
-  const { data: existing } = await admin
-    .from('ai_program_reviews')
-    .select('id, attempt_count, status')
-    .eq('user_id', userId)
-    .maybeSingle()
+  const { data: claimResult, error: claimError } = await admin.rpc('claim_program_insight_generation', {
+    p_user_id: userId,
+    p_source_hash: sourceHash,
+    p_is_retry: isRetry,
+    p_provider: provider,
+    p_model: reflectionModel
+  })
 
-  if (existing) {
-    if (existing.status === 'pending') return { status: 'pending', reflection: null, practice: null }
-    if (!isRetry && existing.status === 'complete') {
-      const { data: completeData } = await admin.from('ai_program_reviews').select('reflection, practice').eq('id', existing.id).single()
-      return { status: 'complete', reflection: completeData?.reflection ?? '', practice: completeData?.practice ?? null }
-    }
-    if (isRetry && existing.attempt_count >= 3) return { status: 'retry_exhausted', reflection: null, practice: null }
-    
-    await admin.from('ai_program_reviews').update({
-      status: 'pending',
-      source_hash: sourceHash,
-      attempt_count: isRetry ? existing.attempt_count + 1 : 1,
-      provider,
-      model: reflectionModel,
-      safety_flags: null,
-      reflection: null,
-      practice: null,
-    }).eq('id', existing.id)
-  } else {
-    await admin.from('ai_program_reviews').insert({
-      user_id: userId,
-      source_hash: sourceHash,
-      status: 'pending',
-      provider,
-      model: reflectionModel,
-      attempt_count: 1
-    })
+  if (claimError) {
+    console.error('Insight claim failed:', claimError.message)
+    return { status: 'failed', insight: null }
   }
+
+  if (claimResult === 'already_complete') {
+    const { data: completeData } = await admin.from('ai_program_insights').select('report_json').eq('user_id', userId).single()
+    return { status: 'complete', insight: completeData?.report_json as ProgramInsight }
+  }
+
+  if (claimResult === 'safety_redirect') return { status: 'safety_redirect', insight: null }
+  if (claimResult === 'already_pending') return { status: 'pending', insight: null }
+  if (claimResult === 'retry_required') return { status: 'failed', insight: null }
+  if (claimResult === 'retry_exhausted') return { status: 'retry_exhausted', insight: null }
+
+  // Must be 'claimed' at this point. Time to call NVIDIA.
+  const { data: pendingData } = await admin.from('ai_program_insights').select('generation_token').eq('user_id', userId).single()
+  const generationToken = pendingData?.generation_token
 
   // Combine entries for NVIDIA
   const combinedContent = [...entries]
@@ -91,45 +106,67 @@ export async function generateProgramReviewHelper(
     const safetyContent = parseJsonObject(safetyResponse.choices[0]?.message?.content)
 
     if (safetyContent.decision === 'immediate_danger') {
-      await admin.from('ai_program_reviews')
-        .update({ status: 'safety_redirect', safety_flags: safetyContent })
+      await admin.from('ai_program_insights')
+        .update({ status: 'safety_redirect' })
         .eq('user_id', userId)
-      return { status: 'safety_redirect', reflection: null, practice: null }
+        .eq('generation_token', generationToken)
+        .eq('status', 'pending')
+      return { status: 'safety_redirect', insight: null }
     }
 
     // 2. Generation
+    const systemPrompt = `You create a private 7-day clarity map. Read the seven entries. Act like a supportive friend who listens.
+Generate strict JSON matching this structure:
+{
+  "overview": "A calm, empathetic synthesis (2-3 sentences).",
+  "recurring_threads": [{"label": "String", "explanation": "String", "evidence_days": [Numbers]}],
+  "perspective_shifts": [{"explanation": "String", "evidence_days": [Numbers]}],
+  "clarity_in_practice": [{"explanation": "String", "evidence_days": [Numbers]}],
+  "carry_forward": "A short, supportive closing."
+}
+Rules:
+- 2-4 recurring threads, 1-3 perspective shifts, 1-3 clarity in practice.
+- Use only explicitly expressed details.
+- Do not diagnose, assign labels, score moods, infer hidden motives, prescribe treatment, or claim improvement.`
+
     const reflectionResponse = await config.client.chat.completions.create({
       model: reflectionModel,
       messages: [
         {
           role: 'system',
-          content: 'You write a brief seven-day reflection for a private journaling product. Read the seven provided entries. Write a calm synthesis of explicit themes across the entries. Write one optional, concrete practice grounded in the user\'s stated Day 6 action or Day 7 carry-forward. Do not gamify, assess, diagnose, label, advise, or score. Output strictly JSON with keys "reflection" and "practice". "practice" can be null.'
+          content: systemPrompt
         },
         { role: 'user', content: combinedContent }
       ],
       temperature: 0.4,
-      max_tokens: 500,
-    }, { timeout: 20000 })
+      max_tokens: PROGRAM_INSIGHT_MAX_TOKENS,
+      reasoning_effort: PROGRAM_INSIGHT_REASONING_EFFORT,
+    }, { timeout: PROGRAM_INSIGHT_GENERATION_TIMEOUT_MS })
 
     const parsed = parseJsonObject(reflectionResponse.choices[0]?.message?.content)
-    const reflection = typeof parsed.reflection === 'string' ? parsed.reflection.trim() : ''
-    const practice = typeof parsed.practice === 'string' ? parsed.practice.trim() : null
 
-    if (!reflection) {
-      throw new Error('Missing reflection content')
+    // Basic validation of schema
+    if (!parsed.overview || !Array.isArray(parsed.recurring_threads)) {
+      throw new Error('Invalid insight format returned by AI')
     }
 
-    await admin.from('ai_program_reviews')
-      .update({ status: 'complete', reflection, practice })
+    const { error } = await admin.from('ai_program_insights')
+      .update({ status: 'complete', report_json: parsed })
       .eq('user_id', userId)
+      .eq('generation_token', generationToken)
+      .eq('status', 'pending')
 
-    return { status: 'complete', reflection, practice }
+    if (error) throw error
+
+    return { status: 'complete', insight: parsed as ProgramInsight }
     
   } catch (error) {
-    console.error('Program review generation failed:', error)
-    await admin.from('ai_program_reviews')
-      .update({ status: 'failed' })
+    console.error('Program insight generation failed:', error)
+    await admin.from('ai_program_insights')
+      .update({ status: 'failed', error_code: 'generation_failed' })
       .eq('user_id', userId)
-    return { status: 'failed', reflection: null, practice: null }
+      .eq('generation_token', generationToken)
+      .eq('status', 'pending')
+    return { status: 'failed', insight: null }
   }
 }

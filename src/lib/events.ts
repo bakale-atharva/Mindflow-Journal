@@ -10,6 +10,8 @@ export type ProductEventName =
   | 'day_2_return'
   | 'program_completed'
   | 'program_review_created'
+  | 'insight_deleted'
+  | 'insight_emailed'
 
 export async function recordProductEvent(
   userId: string,
