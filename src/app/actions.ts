@@ -11,7 +11,6 @@ import {
   getProgramDay,
   getPrompt,
   getUnlockTime,
-  isCompletionWindowOpen,
   isProgramComplete,
   PROGRAM_LENGTH,
   type ProgramDay,
@@ -136,7 +135,6 @@ export type DashboardData = {
   currentDay: ProgramDay | null;
   nextUnlockAt: string | null;
   completed: boolean;
-  completionWindowOpen: boolean;
   programReview: ProgramReview | null;
   sourceHash: string;
 };
@@ -228,23 +226,7 @@ export async function getDashboard(): Promise<DashboardData> {
   const startedAt = profile.program_started_at;
   const currentDay = startedAt ? getProgramDay(startedAt) : null;
   const days = startedAt ? buildProgramDays(startedAt, entries) : [];
-  const completed = startedAt ? isProgramComplete(startedAt, entries) : false;
-  const completionWindowOpen = startedAt ? isCompletionWindowOpen(startedAt) : true;
-
-  if (startedAt && !completionWindowOpen && !completed) {
-    after(async () => {
-      const admin = createAdminClient();
-      if (!admin) return;
-      const { count } = await admin
-        .from("product_events")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("event_name", "program_incomplete");
-      if (count === 0) {
-        await recordProductEvent(user.id, "program_incomplete");
-      }
-    });
-  }
+  const completed = startedAt ? isProgramComplete(entries) : false;
 
   return {
     profile,
@@ -256,7 +238,6 @@ export async function getDashboard(): Promise<DashboardData> {
         ? getUnlockTime(startedAt, (currentDay + 1) as ProgramDay).toISOString()
         : null,
     completed,
-    completionWindowOpen,
     programReview: (reviewResult.data as ProgramReview) ?? null,
     sourceHash: hashJournalEntries(entries),
   };
@@ -424,7 +405,7 @@ async function processAndSaveEntry({
   
   if (
     !existing &&
-    isProgramComplete(profile.program_started_at, completionEntries ?? [])
+    isProgramComplete(completionEntries ?? [])
   ) {
     after(() => recordProductEvent(user.id, "program_completed"));
   }
@@ -778,7 +759,7 @@ export async function generateProgramReview(
     .eq("user_id", user.id)
     .not("program_day", "is", null);
 
-  if (!isProgramComplete(profile.program_started_at, entries ?? [])) {
+  if (!isProgramComplete(entries ?? [])) {
     return { status: "error", error: "Program not completed yet." };
   }
 
@@ -822,7 +803,7 @@ export async function retryProgramReview(
     .eq("user_id", user.id)
     .not("program_day", "is", null);
 
-  if (!isProgramComplete(profile.program_started_at, entries ?? [])) {
+  if (!isProgramComplete(entries ?? [])) {
     return { status: "error", error: "Program not completed yet." };
   }
 

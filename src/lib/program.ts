@@ -1,6 +1,5 @@
 export const DAY_MS = 24 * 60 * 60 * 1000
 export const PROGRAM_LENGTH = 7
-export const COMPLETION_WINDOW_DAYS = 10
 
 export const PROGRAM_PROMPTS = [
   { day: 1, id: 'day-1-mental-load', theme: 'Mental load', prompt: 'What thoughts are taking up the most space in your mind today?' },
@@ -32,12 +31,7 @@ export function getUnlockTime(programStartedAt: string | Date, day: ProgramDay) 
   return new Date(new Date(programStartedAt).getTime() + (day - 1) * DAY_MS)
 }
 
-export function isCompletionWindowOpen(programStartedAt: string | Date, now: string | Date = new Date()) {
-  return new Date(now).getTime() < new Date(programStartedAt).getTime() + COMPLETION_WINDOW_DAYS * DAY_MS
-}
-
 export function isProgramComplete(
-  programStartedAt: string | Date,
   entries: ReadonlyArray<{ program_day: number; created_at: string | Date }>
 ) {
   if (entries.length !== PROGRAM_LENGTH) return false
@@ -47,8 +41,7 @@ export function isProgramComplete(
     return false
   }
 
-  const deadline = new Date(programStartedAt).getTime() + COMPLETION_WINDOW_DAYS * DAY_MS
-  return entries.every((entry) => new Date(entry.created_at).getTime() < deadline)
+  return true
 }
 
 export function buildProgramDays(

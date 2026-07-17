@@ -5,7 +5,6 @@ import {
   DAY_MS,
   getProgramDay,
   getUnlockTime,
-  isCompletionWindowOpen,
   isProgramComplete,
 } from './program.ts'
 
@@ -34,17 +33,12 @@ test('unlock timestamps derive from the immutable start instant', () => {
   assert.equal(getUnlockTime(start, 3).toISOString(), '2026-07-03T10:00:00.000Z')
 })
 
-test('the completion window closes at exactly ten days', () => {
-  assert.equal(isCompletionWindowOpen(start, new Date(new Date(start).getTime() + DAY_MS * 10 - 1)), true)
-  assert.equal(isCompletionWindowOpen(start, new Date(new Date(start).getTime() + DAY_MS * 10)), false)
-})
-
-test('seven distinct entries submitted before the deadline complete the program', () => {
+test('seven distinct entries complete the program', () => {
   const entries = Array.from({ length: 7 }, (_, index) => ({
     program_day: index + 1,
     created_at: new Date(new Date(start).getTime() + index * DAY_MS),
   }))
-  assert.equal(isProgramComplete(start, entries), true)
+  assert.equal(isProgramComplete(entries), true)
 })
 
 test('a duplicate or missing day cannot complete the program', () => {
@@ -52,13 +46,13 @@ test('a duplicate or missing day cannot complete the program', () => {
     program_day: index === 6 ? 6 : index + 1,
     created_at: new Date(new Date(start).getTime() + index * DAY_MS),
   }))
-  assert.equal(isProgramComplete(start, entries), false)
+  assert.equal(isProgramComplete(entries), false)
 })
 
-test('an entry submitted at the ten-day boundary does not complete the program', () => {
+test('seven distinct entries still complete the program after any delay', () => {
   const entries = Array.from({ length: 7 }, (_, index) => ({
     program_day: index + 1,
-    created_at: new Date(new Date(start).getTime() + (index === 6 ? 10 : index) * DAY_MS),
+    created_at: new Date(new Date(start).getTime() + (365 + index) * DAY_MS),
   }))
-  assert.equal(isProgramComplete(start, entries), false)
+  assert.equal(isProgramComplete(entries), true)
 })

@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   BookOpenText,
-  LockKeyhole,
   Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -112,14 +111,6 @@ export function JournalIndex({ dashboard }: { dashboard: DashboardData }) {
           </Link>
         </section>
       )}
-
-      {!dashboard.completionWindowOpen && !dashboard.completed ? (
-        <div className="mt-6 flex items-start gap-3 rounded-xl border border-ink/8 bg-white/55 p-5 text-sm leading-6 text-ink/55">
-          <LockKeyhole className="mt-0.5 size-5 shrink-0" />
-          The ten-day completion window has ended. Your saved entries remain
-          available here.
-        </div>
-      ) : null}
     </div>
   );
 }
