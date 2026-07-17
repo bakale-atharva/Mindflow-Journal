@@ -65,13 +65,13 @@ export type DayTwoResponseData = {
   can_wait: string;
 };
 
-export type Day3ResponseData = {
+export type DayThreeResponseData = {
   version: 1;
   within_control: string;
   outside_control: string;
 };
 
-export type Day4ResponseData = {
+export type DayFourResponseData = {
   version: 1;
   recurring_thought: string;
   usual_moment: string;
@@ -97,8 +97,8 @@ export type Day7ResponseData = {
 
 export type StructuredResponseData =
   | DayTwoResponseData
-  | Day3ResponseData
-  | Day4ResponseData
+  | DayThreeResponseData
+  | DayFourResponseData
   | Day5ResponseData
   | Day6ResponseData
   | Day7ResponseData
@@ -478,7 +478,7 @@ export async function saveDayThreeEntry(
   if (outside_control) combinedParts.push(`Outside my control:\n${outside_control}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  const response_data: Day3ResponseData = { version: 1, within_control, outside_control };
+  const response_data: DayThreeResponseData = { version: 1, within_control, outside_control };
 
   return processAndSaveEntry({
     day: 3,
@@ -504,7 +504,7 @@ export async function saveDayFourEntry(
   if (usual_moment) combinedParts.push(`When it usually appears:\n${usual_moment}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  const response_data: Day4ResponseData = { version: 1, recurring_thought, usual_moment };
+  const response_data: DayFourResponseData = { version: 1, recurring_thought, usual_moment };
 
   return processAndSaveEntry({
     day: 4,

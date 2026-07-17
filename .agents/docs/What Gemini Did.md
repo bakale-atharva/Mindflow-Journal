@@ -176,14 +176,14 @@ I successfully built Day 4 (the "Recurrence Loop" exercise), introducing a verti
 - Updated the canonical `supabase_schema.sql` constraint rules.
 
 ### 2. Backend Logic (`src/app/actions.ts`)
-- Extended the `StructuredResponseData` union with `Day4ResponseData`.
+- Extended the `StructuredResponseData` union with `DayFourResponseData`.
 - Authored the `saveDayFourEntry` server action, incorporating the 72-hour unlock progression.
 - Ensured the `content` field for AI generation only includes `usual_moment` text if it was actually provided, preventing messy formatting on empty optional inputs.
 
 ### 3. Frontend Architecture (`src/components/day-4-composer.tsx`)
 - Designed a stacked, vertical loop composer UI. The top card uses a warm porcelain style with Lilac accents for the required "recurring thought", while the optional "usual moment" context card sits below on Orchid Mist.
 - Connected the two components with a subtle vertical thread to visualize the recurrence loop.
-- Integrated `Day4Composer` seamlessly into `DayExperienceDispatcher` to continue the progressive unlocked journey.
+- Integrated `DayFourComposer` seamlessly into `DayExperienceDispatcher` to continue the progressive unlocked journey.
 
 ## Phase 4, Part 3: Day 3 Control Boundary Experience
 
@@ -202,7 +202,7 @@ I successfully built Day 3 (the "Control" exercise), keeping true to the Seven-D
 
 ### 3. Frontend Architecture (`src/components/day-3-composer.tsx`)
 - Constructed a two-pane layout to emphasize contrast: "Within your control" (seafoam styling) vs "Outside your control" (orchid styling).
-- Integrated `Day3Composer` into the existing `DayExperienceDispatcher`.
+- Integrated `DayThreeComposer` into the existing `DayExperienceDispatcher`.
 - Connected the form with `saveDayThreeEntry`, inheriting auto-save state, reflection generation, and exact character-limit counting logic.
 
 ## Phase 1 & 2: Overview (Historical)
