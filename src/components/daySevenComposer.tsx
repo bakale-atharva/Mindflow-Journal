@@ -6,8 +6,8 @@ import { Check, Save, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { saveDaySevenEntry, type JournalEntry } from "@/app/actions";
 import type { ProgramDayView } from "@/lib/program";
-import { ReflectionPanel } from "@/components/reflection-panel";
-import { MoodSelector } from "@/components/mood-selector";
+import { ReflectionPanel } from "@/components/reflectionPanel";
+import { MoodSelector } from "@/components/moodSelector";
 
 export function DaySevenComposer({
   day,

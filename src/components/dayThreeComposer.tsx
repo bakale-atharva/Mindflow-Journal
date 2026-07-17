@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Check, Save } from "lucide-react";
 import { saveDayThreeEntry, type JournalEntry } from "@/app/actions";
 import type { ProgramDayView } from "@/lib/program";
-import { ReflectionPanel } from "@/components/reflection-panel";
-import { MoodSelector } from "@/components/mood-selector";
+import { ReflectionPanel } from "@/components/reflectionPanel";
+import { MoodSelector } from "@/components/moodSelector";
 
 export function DayThreeComposer({
   day,
