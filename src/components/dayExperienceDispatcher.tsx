@@ -1,6 +1,6 @@
 import type { JournalEntry } from "@/app/actions";
 import type { ProgramDayView } from "@/lib/program";
-import { Day1Composer } from "@/components/day-1-composer";
+import { DayOneComposer } from "@/components/dayOneComposer";
 import { Day2Composer } from "@/components/day-2-composer";
 import { Day3Composer } from "@/components/day-3-composer";
 import { Day4Composer } from "@/components/day-4-composer";
@@ -39,5 +39,5 @@ export function DayExperienceDispatcher({
     return <Day7Composer day={day} entry={entry} />;
   }
   
-  return <Day1Composer day={day} entry={entry} />;
+  return <DayOneComposer day={day} entry={entry} />;
 }

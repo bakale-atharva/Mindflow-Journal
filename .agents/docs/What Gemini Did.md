@@ -73,7 +73,7 @@ I successfully implemented the structured "Day 2: Urgency" exercise which introd
 
 ### 3. Frontend Architecture (`src/components/*`)
 - Extracted the reusable `MoodSelector` so both Day 1 and Day 2 can share the identical interaction logic and UI.
-- Renamed the legacy `EntryComposer` to `Day1Composer`.
+- Renamed the legacy `EntryComposer` to `DayOneComposer`.
 - Built the `Day2Composer` consisting of a responsive two-column grid (coral tint for "Feels urgent" and seafoam tint for "Can safely wait").
 - Introduced `DayExperienceDispatcher` to cleanly switch between the single-input Day 1 experience and the dual-input Day 2 experience without cluttering the main Today screen.
 - Enhanced the `SevenDayPath` sidebar so the **actively viewed day** perfectly highlights in pink (`bg-orchid-mist`), while the inactive ones revert to standard styles, responding directly to user design feedback.

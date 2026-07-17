@@ -6,7 +6,7 @@ import type { ProgramDayView } from "@/lib/program";
 import { DayExperienceDispatcher } from "@/components/dayExperienceDispatcher";
 import { SevenDayPath } from "@/components/sevenDayPath";
 import { ThoughtContour } from "@/components/thoughtContour";
-import { ProgramReviewPanel } from "@/components/program-review-panel";
+import { ProgramReviewPanel } from "@/components/programReviewPanel";
 
 export function TodayView({
   dashboard,

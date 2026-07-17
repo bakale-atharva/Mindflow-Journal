@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
-import { AppShell } from "@/components/app-shell";
+import { AppShell } from "@/components/appShell";
 
 const instrumentSans = Instrument_Sans({
   variable: "--font-sans",
