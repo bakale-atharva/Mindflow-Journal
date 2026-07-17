@@ -17,9 +17,11 @@ export function DeleteEntryDialog({ entryId }: { entryId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(deleteEntry, null);
+
   useEffect(() => {
     if (state?.status === "success") router.push("/journal");
   }, [router, state]);
+
   return (
     <>
       <button
@@ -29,6 +31,7 @@ export function DeleteEntryDialog({ entryId }: { entryId: string }) {
         <Trash2 className="size-4" />
         Delete entry
       </button>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="rounded-[26px] p-6 sm:max-w-md">
           <DialogHeader>
@@ -40,11 +43,13 @@ export function DeleteEntryDialog({ entryId }: { entryId: string }) {
               cannot be undone.
             </DialogDescription>
           </DialogHeader>
+
           <form action={action}>
             <input type="hidden" name="entry_id" value={entryId} />
             {state?.status === "error" ? (
               <p className="mb-3 text-sm text-destructive">{state.error}</p>
             ) : null}
+
             <DialogFooter className="mt-4 -mx-6 -mb-6 rounded-b-[26px] p-5">
               <button
                 type="button"

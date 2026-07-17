@@ -3,7 +3,8 @@ import 'server-only'
 import crypto from 'crypto'
 import type { JournalEntry, ProgramReviewStatus } from '@/app/actions'
 import { createAdminClient } from '@/lib/admin'
-import { getNvidiaAiConfig, parseJsonObject } from '@/lib/nvidia-ai'
+import { getNvidiaAiConfig } from '@/lib/nvidia-ai'
+import { parseJsonObject } from '@/lib/nvidia-ai-config'
 
 export type ProgramReviewResult =
   | { status: 'complete'; reflection: string; practice: string | null }

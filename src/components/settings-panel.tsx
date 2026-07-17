@@ -5,7 +5,7 @@ import { LogOut, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
 import { deleteAccount, updateAiConsent, type ProfileState } from '@/app/actions'
 import { signOut } from '@/app/auth/actions'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { hasActiveNvidiaConsent, NVIDIA_CONSENT_VERSION } from '@/lib/nvidia-ai'
+import { hasActiveNvidiaConsent, NVIDIA_CONSENT_VERSION } from '@/lib/nvidia-ai-config'
 
 export function SettingsPanel({ profile }: { profile: ProfileState }) {
   const [consentState, consentAction, consentPending] = useActionState(updateAiConsent, null)

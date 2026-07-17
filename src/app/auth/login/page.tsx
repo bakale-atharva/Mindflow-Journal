@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { LockKeyhole, ShieldCheck } from "lucide-react";
-import { MagicLinkForm } from "@/components/magic-link-form";
+import { MagicLinkForm } from "@/components/magicLinkForm";
 import { ThoughtContour } from "@/components/thoughtContour";
 import { getBetaUser } from "@/lib/auth";
 

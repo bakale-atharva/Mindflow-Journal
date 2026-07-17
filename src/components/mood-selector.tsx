@@ -18,7 +18,8 @@ export function MoodSelector({
   return (
     <fieldset>
       <legend className="text-sm font-medium text-ink/58">
-        How does today feel? <span className="font-normal text-ink/35">Optional</span>
+        How does today feel?{" "}
+        <span className="font-normal text-ink/35">Optional</span>
       </legend>
       <div className="mt-3 grid grid-cols-5 gap-2">
         {moods.map((item) => (
@@ -37,9 +38,11 @@ export function MoodSelector({
             )}
           >
             <span
-              className="size-5 rounded-full border-2 border-white/50 bg-[var(--mood-color)] shadow-sm"
+              className="size-5 rounded-full border-2 border-white/50 bg-(--mood-color) shadow-sm"
               style={
-                { "--mood-color": `var(--mood-${item.score})` } as React.CSSProperties
+                {
+                  "--mood-color": `var(--mood-${item.score})`,
+                } as React.CSSProperties
               }
             />
             <span className="truncate text-[9px] font-medium sm:text-[10px]">

@@ -4,7 +4,7 @@ import { useActionState, useEffect } from 'react'
 import { Sparkles, Check, RefreshCw, TriangleAlert } from 'lucide-react'
 import type { DashboardData } from '@/app/actions'
 import { generateProgramReview, retryProgramReview, keepProgramPractice, updateAiConsent } from '@/app/actions'
-import { hasActiveNvidiaConsent } from '@/lib/nvidia-ai'
+import { hasActiveNvidiaConsent } from '@/lib/nvidia-ai-config'
 
 export function ProgramReviewPanel({ dashboard, currentHash }: { dashboard: DashboardData; currentHash: string }) {
   const review = dashboard.programReview

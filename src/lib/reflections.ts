@@ -2,7 +2,8 @@ import 'server-only'
 
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/admin'
-import { getNvidiaAiConfig, parseJsonObject } from '@/lib/nvidia-ai'
+import { getNvidiaAiConfig } from '@/lib/nvidia-ai'
+import { parseJsonObject } from '@/lib/nvidia-ai-config'
 
 export const IMMEDIATE_DANGER_NOTICE =
   'MindFlow isn’t equipped to help with immediate danger. If you may act on thoughts of harming yourself or someone else, contact local emergency services now or reach out to someone you trust.'

@@ -20,7 +20,7 @@ import {
 import { generateReflection, type ReflectionResult } from "@/lib/reflections";
 import { hashJournalEntries } from "@/lib/program-review";
 import { createClient } from "@/lib/server";
-import { hasActiveNvidiaConsent, NVIDIA_CONSENT_VERSION } from "@/lib/nvidia-ai";
+import { hasActiveNvidiaConsent, NVIDIA_CONSENT_VERSION } from "@/lib/nvidia-ai-config";
 
 export type ReflectionStatus =
   | "pending"
