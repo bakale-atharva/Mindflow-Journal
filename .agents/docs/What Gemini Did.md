@@ -67,14 +67,14 @@ I successfully implemented the structured "Day 2: Urgency" exercise which introd
 - Added strict shape-checking constraints for Day 2 to ensure `urgent` and `can_wait` are strings and at least one has content.
 
 ### 2. Backend Logic (`src/app/actions.ts`)
-- Introduced the `Day2ResponseData` typing for the JSONB data.
+- Introduced the `DayTwoResponseData` typing for the JSONB data.
 - Built a dedicated `saveDayTwoEntry` server action that accepts the two-part inputs and securely generates the deterministic text combined payload for older read layers (like History and the AI moderation layer).
 - Ensured a 10,000 combined-character limit and correct duplicate protection mechanisms.
 
 ### 3. Frontend Architecture (`src/components/*`)
 - Extracted the reusable `MoodSelector` so both Day 1 and Day 2 can share the identical interaction logic and UI.
 - Renamed the legacy `EntryComposer` to `DayOneComposer`.
-- Built the `Day2Composer` consisting of a responsive two-column grid (coral tint for "Feels urgent" and seafoam tint for "Can safely wait").
+- Built the `DayTwoComposer` consisting of a responsive two-column grid (coral tint for "Feels urgent" and seafoam tint for "Can safely wait").
 - Introduced `DayExperienceDispatcher` to cleanly switch between the single-input Day 1 experience and the dual-input Day 2 experience without cluttering the main Today screen.
 - Enhanced the `SevenDayPath` sidebar so the **actively viewed day** perfectly highlights in pink (`bg-orchid-mist`), while the inactive ones revert to standard styles, responding directly to user design feedback.
 

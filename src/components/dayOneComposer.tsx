@@ -61,10 +61,12 @@ export function DayOneComposer({
           </span>
         ) : null}
       </div>
+
       <form action={action} className="mt-7">
         <input type="hidden" name="program_day" value={day.day} />
         <input type="hidden" name="mood" value={mood ?? ""} />
         <MoodSelector mood={mood} setMood={setMood} />
+
         <div className="mt-6 rounded-xl border border-ink/10 bg-white p-4 transition focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-lilac/10 sm:p-5">
           <textarea
             ref={textareaRef}
@@ -76,10 +78,12 @@ export function DayOneComposer({
             placeholder="Begin wherever the thought starts…"
             className="min-h-56 w-full resize-none overflow-y-auto bg-transparent text-base leading-8 text-ink outline-none placeholder:text-ink/25"
           />
+
           <div className="mt-3 flex justify-end font-mono text-[10px] text-ink/35">
             {content.length.toLocaleString()} / 10,000
           </div>
         </div>
+
         {state?.status === "error" ? (
           <p
             role="alert"
@@ -88,6 +92,7 @@ export function DayOneComposer({
             {state.error}
           </p>
         ) : null}
+
         <div className="mt-5 flex items-center justify-end gap-3">
           {content !== originalContent ? (
             <button
@@ -98,6 +103,7 @@ export function DayOneComposer({
               Discard
             </button>
           ) : null}
+
           <button
             type="submit"
             disabled={pending || !content.trim()}
@@ -108,6 +114,7 @@ export function DayOneComposer({
           </button>
         </div>
       </form>
+      
       {state?.status === "success" ? (
         <div className="mt-6">
           <ReflectionPanel

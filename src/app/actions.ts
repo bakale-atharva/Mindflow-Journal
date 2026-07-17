@@ -59,7 +59,7 @@ export type ProgramReview = {
   updated_at: string;
 };
 
-export type Day2ResponseData = {
+export type DayTwoResponseData = {
   version: 1;
   urgent: string;
   can_wait: string;
@@ -96,7 +96,7 @@ export type Day7ResponseData = {
 };
 
 export type StructuredResponseData =
-  | Day2ResponseData
+  | DayTwoResponseData
   | Day3ResponseData
   | Day4ResponseData
   | Day5ResponseData
@@ -452,7 +452,7 @@ export async function saveDayTwoEntry(
   if (can_wait) combinedParts.push(`Can safely wait:\n${can_wait}`);
   const content = combinedParts.join("\n\n").replace(/\r\n/g, "\n");
 
-  const response_data: Day2ResponseData = { version: 1, urgent, can_wait };
+  const response_data: DayTwoResponseData = { version: 1, urgent, can_wait };
 
   return processAndSaveEntry({
     day: 2,
