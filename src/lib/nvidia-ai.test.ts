@@ -30,6 +30,10 @@ test('uses NVIDIA defaults only when an API key exists', () => {
 
 test('parses JSON and requires explicit NVIDIA version-4 consent', () => {
   assert.deepEqual(parseJsonObject('{"reflection":"A calm note.","question":null}'), { reflection: 'A calm note.', question: null })
+  assert.deepEqual(
+    parseJsonObject('```json\n{"reflection":"A calm note.","question":null}\n```'),
+    { reflection: 'A calm note.', question: null },
+  )
   assert.throws(() => parseJsonObject('not json'), /valid JSON object/)
   assert.throws(() => parseJsonObject('[]'), /valid JSON object/)
   assert.equal(parseJsonObject('{"practice":null}').practice, null)

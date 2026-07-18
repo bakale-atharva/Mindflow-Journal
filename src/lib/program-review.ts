@@ -7,6 +7,7 @@ import { getNvidiaAiConfig } from '@/lib/nvidia-ai'
 import { parseJsonObject } from '@/lib/nvidia-ai-config'
 import {
   PROGRAM_INSIGHT_GENERATION_TIMEOUT_MS,
+  PROGRAM_INSIGHT_MAX_ATTEMPTS,
   PROGRAM_INSIGHT_MAX_TOKENS,
   PROGRAM_INSIGHT_REASONING_EFFORT,
 } from '@/lib/program-insight-request'
@@ -101,6 +102,7 @@ export async function generateProgramReviewHelper(
       ],
       temperature: 0,
       max_tokens: 100,
+      response_format: { type: 'json_object' },
     }, { timeout: 15000 })
     
     const safetyContent = parseJsonObject(safetyResponse.choices[0]?.message?.content)
@@ -141,6 +143,7 @@ Rules:
       temperature: 0.4,
       max_tokens: PROGRAM_INSIGHT_MAX_TOKENS,
       reasoning_effort: PROGRAM_INSIGHT_REASONING_EFFORT,
+      response_format: { type: 'json_object' },
     }, { timeout: PROGRAM_INSIGHT_GENERATION_TIMEOUT_MS })
 
     const parsed = parseJsonObject(reflectionResponse.choices[0]?.message?.content)

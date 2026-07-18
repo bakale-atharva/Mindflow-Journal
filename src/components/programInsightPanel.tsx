@@ -127,7 +127,7 @@ export function ProgramInsightPanel({
           Synthesizing your clarity map
         </h2>
         <p className="text-sm leading-6 text-ink/65 max-w-md mx-auto">
-          This may take up to 20 seconds to read through all 7 days.
+          This may take up to 20 seconds for the AI to read through your entries.
         </p>
       </section>
     );

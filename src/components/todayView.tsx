@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, BookOpenText, Clock3, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import type { DashboardData, JournalEntry } from "@/app/actions";
@@ -199,9 +200,7 @@ export function TodayView({
 function MobileBrand() {
   return (
     <div className="mb-7 flex items-center gap-2 md:hidden">
-      <span className="grid size-8 place-items-center rounded-xl bg-ink text-xs font-semibold text-white">
-        M
-      </span>
+      <Image src="/logo.png" alt="MindFlow Logo" width={32} height={32} className="rounded-xl shrink-0" />
       <span className="font-heading text-lg font-semibold tracking-[-.04em]">
         MindFlow
       </span>

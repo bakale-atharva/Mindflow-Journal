@@ -27,7 +27,12 @@ export function getNvidiaAiConfig(env: NodeJS.ProcessEnv = process.env): NvidiaA
 export function parseJsonObject(content: string | null | undefined): Record<string, unknown> {
   let value: unknown
   try {
-    value = JSON.parse(content ?? '')
+    const trimmed = (content ?? '').trim()
+    const json = trimmed
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/, '')
+    value = JSON.parse(json)
   } catch {
     throw new Error('Expected a valid JSON object')
   }

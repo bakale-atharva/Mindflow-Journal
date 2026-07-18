@@ -25,7 +25,7 @@ create table if not exists public.ai_program_insights (
   model text,
   report_json jsonb,
   generation_token uuid,
-  attempt_count smallint not null default 0 check (attempt_count >= 0 and attempt_count <= 2),
+  attempt_count smallint not null default 0 check (attempt_count >= 0 and attempt_count <= 10),
   error_code text,
   expires_at timestamptz not null,
   email_sent_at timestamptz,
@@ -36,6 +36,12 @@ create table if not exists public.ai_program_insights (
 
 create unique index if not exists ai_program_insights_user_id_key
 on public.ai_program_insights (user_id);
+
+alter table public.ai_program_insights
+  drop constraint if exists ai_program_insights_attempt_count_check;
+alter table public.ai_program_insights
+  add constraint ai_program_insights_attempt_count_check
+  check (attempt_count >= 0 and attempt_count <= 10);
 
 alter table public.ai_program_insights enable row level security;
 
@@ -200,7 +206,7 @@ begin
   end if;
 
   if p_is_retry then
-    if v_existing.attempt_count >= 2 then
+    if v_existing.attempt_count >= 10 then
       return 'retry_exhausted';
     end if;
 
