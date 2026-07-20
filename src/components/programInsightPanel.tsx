@@ -11,7 +11,14 @@ import {
   emailProgramInsightAction
 } from "@/app/actions";
 import { hasActiveNvidiaConsent } from "@/lib/nvidia-ai-config";
-import type { ProgramInsight } from "@/lib/program-review";
+import { getDisplayableInsight } from "@/lib/program-insight-display";
+import type { ProgramInsight } from "@/lib/program-insight-schema";
+
+const actionPlanLabels = {
+  immediate: "For today",
+  conversation_or_boundary: "For a conversation",
+  longer_term: "For the longer view",
+} as const;
 
 export function ProgramInsightPanel({
   dashboard,
@@ -45,7 +52,12 @@ export function ProgramInsightPanel({
   );
 
   const isPending = insightState?.status === "pending" || isGenerating || isRetrying;
-  const insight = insightState?.report_json as ProgramInsight | undefined | null;
+  const insight = getDisplayableInsight(insightState?.report_json);
+  const detailedInsight = insight && "emotional_patterns" in insight && "action_plan" in insight
+    ? insight as ProgramInsight
+    : null;
+  const emotionalPatterns = detailedInsight?.emotional_patterns ?? [];
+  const actionPlan = detailedInsight?.action_plan ?? [];
 
   useEffect(() => {
     if (isPending) {
@@ -215,6 +227,26 @@ export function ProgramInsightPanel({
         </div>
       )}
 
+      {emotionalPatterns.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-sm uppercase tracking-[.18em] font-mono text-ink/50 mb-4">Emotional Patterns</h3>
+          <div className="space-y-4">
+            {emotionalPatterns.map((pattern, i) => (
+              <div key={i} className="rounded-2xl bg-orchid-mist/15 p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-semibold text-ink">{pattern.label}</span>
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-ink/40">
+                    Days {pattern.evidence_days.join(", ")}
+                  </span>
+                </div>
+                <p className="text-sm text-ink/60 leading-relaxed mb-2 whitespace-pre-wrap">{pattern.context}</p>
+                <p className="text-sm text-ink/75 leading-relaxed whitespace-pre-wrap">{pattern.explanation}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {insight.perspective_shifts?.length > 0 && (
         <div className="mb-8">
           <h3 className="text-sm uppercase tracking-[.18em] font-mono text-ink/50 mb-4">Perspective Shifts</h3>
@@ -253,6 +285,32 @@ export function ProgramInsightPanel({
         </div>
       )}
 
+      {actionPlan.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-sm uppercase tracking-[.18em] font-mono text-ink/50 mb-4">Action Plan</h3>
+          <div className="grid gap-4 md:grid-cols-3">
+            {(Object.entries(actionPlanLabels) as Array<[keyof typeof actionPlanLabels, string]>).map(([kind, label]) => {
+              const action = actionPlan.find(item => item.kind === kind);
+              if (!action) return null;
+
+              return (
+                <div key={kind} className="rounded-2xl border border-ink/5 bg-seafoam/10 p-5">
+                  <p className="text-[10px] uppercase font-mono tracking-wider text-ink/45 mb-3">{label}</p>
+                  <h4 className="font-semibold text-ink mb-2">{action.title}</h4>
+                  <p className="text-sm text-ink/75 leading-relaxed whitespace-pre-wrap mb-3">{action.action}</p>
+                  <p className="text-sm text-ink/60 leading-relaxed whitespace-pre-wrap">
+                    <span className="font-medium text-ink/70">Rationale: </span>{action.explanation}
+                  </p>
+                  <p className="mt-3 text-[10px] uppercase font-mono tracking-wider text-ink/40">
+                    Days {action.evidence_days.join(", ")}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="mt-8 pt-8 border-t border-ink/5">
         <h3 className="text-sm uppercase tracking-[.18em] font-mono text-ink/50 mb-4">Carry Forward</h3>
         <p className="text-base text-ink/80 italic">"{insight.carry_forward}"</p>
@@ -261,7 +319,6 @@ export function ProgramInsightPanel({
       <div className="mt-10 flex flex-wrap gap-4 items-center justify-start border-t border-ink/5 pt-6">
         <a
           href="/api/export-pdf"
-          download
           className="inline-flex items-center gap-2 rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-sm font-semibold text-ink shadow-sm hover:bg-ink/5 transition-colors"
         >
           <Download className="size-4" /> Save as PDF

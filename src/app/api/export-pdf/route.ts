@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/client';
+import { createClient } from '@/lib/server';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import type { ProgramInsight } from '@/lib/program-review';
+import { parseStoredProgramInsight, type ProgramInsight } from '@/lib/program-insight-schema';
+import { toPdfSafeText } from '@/lib/pdf-text';
 
 export async function GET(request: Request) {
   try {
@@ -29,7 +30,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Insight has expired' }, { status: 400 });
     }
 
-    const insight = insightData.report_json as ProgramInsight;
+    const insight = parseStoredProgramInsight(insightData.report_json);
+    const detailedInsight = 'emotional_patterns' in insight && 'action_plan' in insight
+      ? insight as ProgramInsight
+      : null;
 
     // Generate PDF
     const pdfDoc = await PDFDocument.create();
@@ -46,7 +50,8 @@ export async function GET(request: Request) {
       // Basic text wrapping
       const maxWidth = width - margin * 2;
       const f = isBold ? fontBold : font;
-      const words = text.split(' ');
+      const safeText = toPdfSafeText(text);
+      const words = safeText.split(' ');
       let line = '';
       
       for (let i = 0; i < words.length; i++) {
@@ -87,6 +92,18 @@ export async function GET(request: Request) {
       y -= 10;
     }
 
+    if (detailedInsight?.emotional_patterns.length) {
+      drawText("EMOTIONAL PATTERNS", 10, true, rgb(0.47, 0.44, 0.53));
+      y -= 5;
+      detailedInsight.emotional_patterns.forEach(pattern => {
+        drawText(`${pattern.label} (Days ${pattern.evidence_days.join(", ")})`, 12, true);
+        drawText(pattern.context, 12);
+        drawText(pattern.explanation, 12);
+        y -= 10;
+      });
+      y -= 10;
+    }
+
     if (insight.perspective_shifts?.length > 0) {
       drawText("PERSPECTIVE SHIFTS", 10, true, rgb(0.47, 0.44, 0.53));
       y -= 5;
@@ -105,6 +122,27 @@ export async function GET(request: Request) {
         y -= 5;
       });
       y -= 15;
+    }
+
+    if (detailedInsight?.action_plan.length) {
+      drawText("ACTION PLAN", 10, true, rgb(0.47, 0.44, 0.53));
+      y -= 5;
+      const actionLabels = {
+        immediate: "FOR TODAY",
+        conversation_or_boundary: "FOR A CONVERSATION",
+        longer_term: "FOR THE LONGER VIEW",
+      } as const;
+      (Object.entries(actionLabels) as Array<[keyof typeof actionLabels, string]>).forEach(([kind, label]) => {
+        const action = detailedInsight.action_plan.find(item => item.kind === kind);
+        if (!action) return;
+        drawText(label, 10, true, rgb(0.47, 0.44, 0.53));
+        drawText(action.title, 12, true);
+        drawText(action.action, 12);
+        drawText(`Rationale: ${action.explanation}`, 12);
+        drawText(`Days ${action.evidence_days.join(", ")}`, 10);
+        y -= 10;
+      });
+      y -= 10;
     }
 
     drawText("CARRY FORWARD", 10, true, rgb(0.47, 0.44, 0.53));

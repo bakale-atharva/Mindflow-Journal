@@ -34,6 +34,10 @@ test('parses JSON and requires explicit NVIDIA version-4 consent', () => {
     parseJsonObject('```json\n{"reflection":"A calm note.","question":null}\n```'),
     { reflection: 'A calm note.', question: null },
   )
+  assert.deepEqual(
+    parseJsonObject('<think>Planning a concise answer.</think>\nHere is the JSON:\n{"reflection":"A calm note.","question":null}'),
+    { reflection: 'A calm note.', question: null },
+  )
   assert.throws(() => parseJsonObject('not json'), /valid JSON object/)
   assert.throws(() => parseJsonObject('[]'), /valid JSON object/)
   assert.equal(parseJsonObject('{"practice":null}').practice, null)

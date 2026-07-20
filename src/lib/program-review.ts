@@ -5,33 +5,19 @@ import type { JournalEntry, ProgramReviewStatus } from '@/app/actions'
 import { createAdminClient } from '@/lib/admin'
 import { getNvidiaAiConfig } from '@/lib/nvidia-ai'
 import { parseJsonObject } from '@/lib/nvidia-ai-config'
+import { parseProgramInsight, parseStoredProgramInsight } from '@/lib/program-insight-schema'
+export type { LegacyProgramInsight, ProgramInsight, StoredProgramInsight } from '@/lib/program-insight-schema'
+import type { ProgramInsight, StoredProgramInsight } from '@/lib/program-insight-schema'
 import {
   PROGRAM_INSIGHT_GENERATION_TIMEOUT_MS,
+  PROGRAM_INSIGHT_COMPLETED_RETENTION_MS,
   PROGRAM_INSIGHT_MAX_ATTEMPTS,
   PROGRAM_INSIGHT_MAX_TOKENS,
   PROGRAM_INSIGHT_REASONING_EFFORT,
 } from '@/lib/program-insight-request'
 
-export type ProgramInsight = {
-  overview: string
-  recurring_threads: Array<{
-    label: string
-    explanation: string
-    evidence_days: number[]
-  }>
-  perspective_shifts: Array<{
-    explanation: string
-    evidence_days: number[]
-  }>
-  clarity_in_practice: Array<{
-    explanation: string
-    evidence_days: number[]
-  }>
-  carry_forward: string
-}
-
 export type ProgramReviewResult =
-  | { status: 'complete'; insight: ProgramInsight }
+  | { status: 'complete'; insight: StoredProgramInsight }
   | { status: 'safety_redirect' | 'failed' | 'pending' | 'not_authorized' | 'consent_required' | 'retry_exhausted'; insight: null }
 
 export function hashJournalEntries(entries: JournalEntry[]): string {
@@ -71,7 +57,12 @@ export async function generateProgramReviewHelper(
 
   if (claimResult === 'already_complete') {
     const { data: completeData } = await admin.from('ai_program_insights').select('report_json').eq('user_id', userId).single()
-    return { status: 'complete', insight: completeData?.report_json as ProgramInsight }
+    try {
+      return { status: 'complete', insight: parseStoredProgramInsight(completeData?.report_json) }
+    } catch (error) {
+      console.error('Stored program insight is invalid:', error)
+      return { status: 'failed', insight: null }
+    }
   }
 
   if (claimResult === 'safety_redirect') return { status: 'safety_redirect', insight: null }
@@ -120,16 +111,19 @@ export async function generateProgramReviewHelper(
     const systemPrompt = `You create a private 7-day clarity map. Read the seven entries. Act like a supportive friend who listens.
 Generate strict JSON matching this structure:
 {
-  "overview": "A calm, empathetic synthesis (2-3 sentences).",
+  "overview": "A calm, empathetic synthesis (3-4 sentences).",
   "recurring_threads": [{"label": "String", "explanation": "String", "evidence_days": [Numbers]}],
+  "emotional_patterns": [{"label": "String", "context": "String", "explanation": "String", "evidence_days": [Numbers]}],
   "perspective_shifts": [{"explanation": "String", "evidence_days": [Numbers]}],
   "clarity_in_practice": [{"explanation": "String", "evidence_days": [Numbers]}],
-  "carry_forward": "A short, supportive closing."
+  "action_plan": [{"kind": "immediate | conversation_or_boundary | longer_term", "title": "String", "action": "String", "explanation": "String", "evidence_days": [Numbers]}],
+  "carry_forward": "A short, supportive closing (2-3 sentences)."
 }
 Rules:
-- 2-4 recurring threads, 1-3 perspective shifts, 1-3 clarity in practice.
+- Include 2-4 recurring threads, 2-3 emotional patterns, 1-3 perspective shifts, and 1-3 clarity-in-practice observations. Each item explanation is 2-3 sentences.
+- Include exactly three action-plan items: one "immediate", one "conversation_or_boundary", and one "longer_term". Give each a concise title, a concrete optional action, a 2-3 sentence rationale, and evidence days.
 - Use only explicitly expressed details.
-- Do not diagnose, assign labels, score moods, infer hidden motives, prescribe treatment, or claim improvement.`
+- Do not diagnose, label conditions, score moods, infer hidden motives, prescribe treatment, make crisis-support claims, or claim improvement. Frame every action as an optional non-clinical choice, never a command.`
 
     const reflectionResponse = await config.client.chat.completions.create({
       model: reflectionModel,
@@ -146,22 +140,28 @@ Rules:
       response_format: { type: 'json_object' },
     }, { timeout: PROGRAM_INSIGHT_GENERATION_TIMEOUT_MS })
 
-    const parsed = parseJsonObject(reflectionResponse.choices[0]?.message?.content)
-
-    // Basic validation of schema
-    if (!parsed.overview || !Array.isArray(parsed.recurring_threads)) {
-      throw new Error('Invalid insight format returned by AI')
+    const reflectionChoice = reflectionResponse.choices[0]
+    if (reflectionChoice?.finish_reason === 'length') {
+      throw new Error('Insight response was truncated. Please retry.')
     }
 
+    const parsed = parseJsonObject(reflectionChoice?.message?.content)
+
+    const insight = parseProgramInsight(parsed)
+
     const { error } = await admin.from('ai_program_insights')
-      .update({ status: 'complete', report_json: parsed })
+      .update({
+        status: 'complete',
+        report_json: insight,
+        expires_at: new Date(Date.now() + PROGRAM_INSIGHT_COMPLETED_RETENTION_MS).toISOString(),
+      })
       .eq('user_id', userId)
       .eq('generation_token', generationToken)
       .eq('status', 'pending')
 
     if (error) throw error
 
-    return { status: 'complete', insight: parsed as ProgramInsight }
+    return { status: 'complete', insight }
     
   } catch (error) {
     console.error('Program insight generation failed:', error)

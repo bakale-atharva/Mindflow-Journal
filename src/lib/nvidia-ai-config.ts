@@ -24,15 +24,36 @@ export function getNvidiaAiConfig(env: NodeJS.ProcessEnv = process.env): NvidiaA
   }
 }
 
+function extractJsonObject(content: string): string {
+  const fenced = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)?.[1]
+  const candidate = (fenced ?? content).trim()
+  if (candidate.startsWith('{')) return candidate
+
+  const start = candidate.indexOf('{')
+  if (start === -1) return candidate
+
+  let depth = 0
+  let quoted = false
+  let escaped = false
+  for (let index = start; index < candidate.length; index += 1) {
+    const character = candidate[index]
+    if (escaped) { escaped = false; continue }
+    if (character === '\\' && quoted) { escaped = true; continue }
+    if (character === '"') { quoted = !quoted; continue }
+    if (quoted) continue
+    if (character === '{') depth += 1
+    if (character === '}') {
+      depth -= 1
+      if (depth === 0) return candidate.slice(start, index + 1)
+    }
+  }
+  return candidate
+}
+
 export function parseJsonObject(content: string | null | undefined): Record<string, unknown> {
   let value: unknown
   try {
-    const trimmed = (content ?? '').trim()
-    const json = trimmed
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```$/, '')
-    value = JSON.parse(json)
+    value = JSON.parse(extractJsonObject(content ?? ''))
   } catch {
     throw new Error('Expected a valid JSON object')
   }

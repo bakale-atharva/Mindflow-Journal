@@ -20,10 +20,17 @@ export function TodayView({
 }) {
   const recent = dashboard.entries.slice(-3).reverse();
   if (dashboard.completed) {
+    const isGenerated = dashboard.programInsight?.status === "complete";
     return (
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-10 lg:px-10">
         <MobileBrand />
-        <section className="surface grid overflow-hidden rounded-[32px] p-7 sm:p-12 md:grid-cols-[minmax(0,0.56fr)_minmax(280px,0.44fr)] md:items-stretch md:gap-8">
+        {isGenerated ? (
+          <ProgramInsightPanel
+            dashboard={dashboard}
+            currentHash={dashboard.sourceHash}
+          />
+        ) : null}
+        <section className={`surface grid overflow-hidden rounded-[32px] p-7 sm:p-12 md:grid-cols-[minmax(0,0.56fr)_minmax(280px,0.44fr)] md:items-stretch md:gap-8 ${isGenerated ? "mt-6" : ""}`}>
           <div className="relative z-10 md:py-2 md:pr-2">
             <p className="font-mono text-[11px] uppercase tracking-[.18em] text-primary">
               Seven-day journal complete
@@ -57,10 +64,12 @@ export function TodayView({
             activeDay={activeDay.day}
           />
         </div>
-        <ProgramInsightPanel
-          dashboard={dashboard}
-          currentHash={dashboard.sourceHash}
-        />
+        {!isGenerated ? (
+          <ProgramInsightPanel
+            dashboard={dashboard}
+            currentHash={dashboard.sourceHash}
+          />
+        ) : null}
       </div>
     );
   }
